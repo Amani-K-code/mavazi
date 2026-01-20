@@ -9,4 +9,6 @@ class Inventory extends Model
 {
     /** @use HasFactory<\Database\Factories\InventoryFactory> */
     use HasFactory;
+
+    protected $fillable= ['item_name', 'category', 'size_label', 'price', 'stock_quantity', 'reserved_quantity', 'low_stock_threshold'];
 }
