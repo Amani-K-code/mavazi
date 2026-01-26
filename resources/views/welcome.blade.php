@@ -38,6 +38,24 @@
             <p class="text-sm text-gray-500">Sign in with your Staff ID</p>
         </div>
 
+
+        @if($errors->any())
+            <div class="mb-4 p-3 rounded-lg bg-red-100 border border-red-400 text-red-700 text-sm">
+                <ul class="list-disc pl-5">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="mb-4 p-3 rounded-lg bg-red-100 border border-red-400 text-red-700 text-sm text-center">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        
         <form action="{{ route('login.post') }}" method="POST" class="space-y-6">
         @csrf
             <div>

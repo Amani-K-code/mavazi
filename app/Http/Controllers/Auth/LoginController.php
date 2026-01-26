@@ -22,11 +22,21 @@ class LoginController extends Controller
             return match($role){
                 'Admin' => redirect()->intended('/admin/dashboard'),
                 'Storekeeper' => redirect()->intended('/storekeeper/dashboard'),
-                default => redirect()->intended('/cashier/dashboard'),
+                'Cashier' => redirect()->intended('/cashier/dashboard'),
+                default => redirect('/'),
+
             };
         }
 
         return back()->withErrors([
-            'user_id_alias' => 'Invalid Credentials']);
+            'user_id_alias' => 'The provided credentials do not match our records.',
+            ]);
+    }
+
+    public function logout(Request $request){
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect('/');
     }
 }
