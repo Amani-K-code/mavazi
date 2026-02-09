@@ -18,7 +18,7 @@ class UserSeeder extends Seeder
             ['alias'=> '000', 'email'=>'superadmin@logos.ac.ke', 'role' =>'Admin', 'pass' => '1324@adm1n'],
             ['alias'=> '001', 'email'=>'principal@logos.ac.ke', 'role' =>'Admin', 'pass' => '5768@adm1n'],
             ['alias'=> '002', 'email'=>'finance@logos.ac.ke', 'role' =>'Admin', 'pass' => '9012@adm1n'],
-
+            //Storekeepers (006 - 010)
             ['alias'=> '006', 'email'=>'store1@logos.ac.ke', 'role' =>'Storekeeper', 'pass' => '1950@st0re'],
             ['alias'=> '007', 'email'=>'store2@logos.ac.ke', 'role' =>'Storekeeper', 'pass' => '1960@st0re'],
             ['alias'=> '008', 'email'=>'store3@logos.ac.ke', 'role' =>'Storekeeper', 'pass' => '1970@st0re'],

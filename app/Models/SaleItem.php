@@ -9,4 +9,15 @@ class SaleItem extends Model
 {
     /** @use HasFactory<\Database\Factories\SaleItemFactory> */
     use HasFactory;
+
+    protected $fillable = [
+        'sale_id',
+        'inventory_id',
+        'quantity',
+        'unit_price'
+    ];
+
+    public function inventory(){
+        return $this->belongsTo(Inventory::class);
+    }
 }
