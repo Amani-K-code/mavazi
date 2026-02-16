@@ -11,13 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('reservations', function (Blueprint $table) {
+        Schema::create('inventory_adjustments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('inventory_id')->constrained();
-            $table->integer('quantity');
-            $table->string('staff_id');
-            $table->timestamp('expires_at');
-            $table->enum('status', ['pending', 'sold', 'restored'])->default('pending');
+            $table->integer('quantity_before');
+            $table->integer('quantity_change');
+            $table->integer('quantity_after');
+            $table->string('reason')->nullable();
+            $table->foreignId('user_id')->constrained();
             $table->timestamps();
         });
     }
@@ -27,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('reservations');
+        Schema::dropIfExists('inventory_adjustments');
     }
 };

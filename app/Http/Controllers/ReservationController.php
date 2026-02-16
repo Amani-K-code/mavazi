@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreReservationRequest;
 use App\Http\Requests\UpdateReservationRequest;
 use App\Models\Reservation;
+use Illuminate\Support\Facades\DB;
 
 class ReservationController extends Controller
 {
@@ -13,9 +14,28 @@ class ReservationController extends Controller
      */
     public function index()
     {
-        //
+        $reservations = Reservation::with('inventory')->where('status', 'pending')->get();
+        return view('admin.reservations', compact('reservations'));
     }
 
+    public function manualRestore($id)
+    {
+        $res = Reservation::findOrFail($id);
+
+        if ($res->status !== 'pending') {
+            DB::transaction(function() use ($res) {
+                $inventory = $res->inventory;
+
+                $inventory->increment('stock_quantity', $res->quantity);
+                $inventory->decrement('reserved_quantity', $res->quantity);
+
+                $res->update(['status' => 'restored']);
+            });
+            return back()->with('success', 'Stock has been manually restored');
+        }
+
+        return back()->with('error', 'This reservation is no longer pending.');
+    }
     /**
      * Show the form for creating a new resource.
      */

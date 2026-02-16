@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreSaleRequest;
 use App\Http\Requests\UpdateSaleRequest;
 use App\Models\Inventory;
+use App\Models\InventoryAdjustment;
+use App\Models\Reservation;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use Illuminate\Http\Request;
@@ -66,15 +68,34 @@ class SaleController extends Controller
 
             $inventory = Inventory::find($item['id']);
             if ($inventory){
+                $oldStock = $inventory->stock_quantity;
+
                 if ($request->status === 'CONFIRMED'){
                     //DIRECT SALE: REDUCE PHYSICAL STOCK
                     $inventory->decrement('stock_quantity', $item['qty']);
                 } elseif($request->status === 'BOOKED'){
                     // Booking: moved to reserved column in order not to be sold to someone else
+                    $inventory->decrement('stock_quantity', $item['qty']);
                     $inventory->increment('reserved_quantity', $item['qty']);
+
+                    Reservation::create([
+                        'inventory_id' => $item['id'],
+                        'quantity' => $item['qty'],
+                        'staff_id' => Auth::id(),
+                        'expires_at' => now()->addMonth(),
+                        'status' => 'pending',
+                    ]);
                 }
-            }
-            // NB: If BOOKED, transaction is saved and tracked but not deducted from stock until fully paid.
+            }// NB: If BOOKED, transaction is saved and tracked but not deducted from stock until fully paid.
+
+            InventoryAdjustment::create([
+                'inventory_id' => $inventory->id,
+                'quantity_before' => $oldStock,
+                'quantity_change' => -$item['qty'],
+                'quantity_after' => $inventory->stock_quantity,
+                'reason' => 'CASHIER SALE: ' . $sale->receipt_no,
+                'user_id' => Auth::id(),
+            ]);
         }
 
         return view('cashier.feedback', compact('sale'));
@@ -141,5 +162,11 @@ class SaleController extends Controller
         ]);
 
         return redirect()->route('cashier.dashboard')->with('success', 'Feedback received! Thank you for your input.');
+    }
+
+    public function history(){
+        $sales = Sale::where('user_id', Auth::id())->with('items.inventory')->latest()->get();
+        return view('cashier.history', compact('sales'));
+
     }
 }

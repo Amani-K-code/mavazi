@@ -58,7 +58,8 @@
     </style>
 </head>
 <body class="antialiased font-sans">
-
+    @include('partials.toast')
+    
     <nav class="fixed w-full z-50 bg-white/90 backdrop-blur-md shadow-sm border-b border-gray-100">
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <div class="flex items-center gap-3">

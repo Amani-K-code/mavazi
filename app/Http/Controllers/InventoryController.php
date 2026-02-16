@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreInventoryRequest;
 use App\Http\Requests\UpdateInventoryRequest;
 use App\Models\Inventory;
+use App\Models\InventoryAdjustment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class InventoryController extends Controller
 {
@@ -22,8 +24,9 @@ class InventoryController extends Controller
         }
 
         $inventory = $query->get()->groupBy('item_name');
+        $items = $query->get();
 
-        return view('cashier.dashboard', compact('inventory'));
+        return view('cashier.inventory', compact('items'));
 
 
     }
@@ -57,6 +60,27 @@ class InventoryController extends Controller
     /**
      * Show the form for creating a new resource.
      */
+    public function addStock(Request $request, $id)
+    {
+        $item = Inventory::findOrFail($id);
+        $old = $item->stock_quantity;
+        $item->increment('stock_quantity', $request->amount);
+        
+        InventoryAdjustment::create([
+            'inventory_id' => $item->id,
+            'quantity_before' => $old,
+            'quantity_change' => $request->amount,
+            'quantity_after' => $item->stock_quantity,
+            'reason' => 'RESTOCK: '. $request->reason,
+            'user_id' => Auth::id(),
+        ]);
+
+        return back();
+
+    }
+    
+    
+    
     public function create()
     {
         //

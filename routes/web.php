@@ -3,6 +3,8 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\SaleController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +37,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/storekeeper/dashboard', function(){
         return view('storekeeper.dashboard');
     })->middleware('role:Storekeeper');
+
+
     Route::get('/cashier/dashboard', [InventoryController::class, 'dashboard'])
     ->middleware('role:Cashier')
     ->name('cashier.dashboard');
@@ -42,4 +46,14 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/sales/store', [SaleController::class, 'store'])->name('sales.store');
     Route::get('sales/download/{id}', [SaleController::class, 'downloadReceipt'])->name('sales.download');
     Route::post('/feedback/{sale}', [SaleController::class, 'storeFeedback'])->name('feedback.store');
+    Route::get('/cashier/inventory', [InventoryController::class, 'index'])->name('cashier.inventory');
+    Route::get('/cashier/history', [SaleController::class, 'history'])->name('cashier.history');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications', [NotificationController::class, 'store'])->name('notifications.store');
+
+    
+
+
+    Route::get('/admin/reservations', [ReservationController::class, 'index'])->name('admin.reservations')->middleware('role:Admin');
+    Route::post('/admin/reservations/restore/{id}', [ReservationController::class, 'restore'])->name('admin.reservations.restore')->middleware('role:Admin');
 });

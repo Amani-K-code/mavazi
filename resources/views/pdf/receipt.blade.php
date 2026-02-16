@@ -27,7 +27,7 @@
         .status-confirmed { background: #dcfce7; color: #166534; }
         .status-booked { background: #fef9c3; color: #854d0e; }
 
-        .footer { position: fixed; bottom: 30px; width: 100%; text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; pt: 10px; }
+        .footer { position: fixed; bottom: 30px; width: 100%; text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 10px; }
     </style>
 </head>
 <body>
@@ -48,7 +48,7 @@
                 <td style="text-align: right;">
                     <div class="label">Receipt Information</div>
                     <div class="value">{{ $sale->receipt_no }}</div>
-                    <div class="value">{{ $sale->created_at->format('d M, Y - h:i A') }}</div>
+                    <div class="value">{{ $sale->created_at->format('d-M-Y h:i A') }}</div>
                     <div class="status-badge {{ $sale->status === 'CONFIRMED' ? 'status-confirmed' : 'status-booked' }}">
                         {{ $sale->status }}
                     </div>
@@ -82,11 +82,14 @@
 
         <div class="total-section">
             <div class="total-box">
-                <div class="label">Total Amount Paid</div>
+                <div class="label">Total Amount {{ $sale->status === 'BOOKED' ? 'Reserved' : 'Paid' }}</div>
                 <div style="font-size: 24px; font-weight: 900; color: #003366;">KES {{ number_format($sale->total_amount) }}</div>
                 <div style="font-size: 10px; color: #64748b; margin-top: 5px;">Payment Method: {{ $sale->payment_method }} | Ref: {{ $sale->reference_id }}</div>
+                
                 @if($sale->status === 'BOOKED' && $sale->expiry_date)
-                    <div style="font-size: 10px; color: #ef4444; font-weight: bold; margin-top: 5px;">BOOKING EXPIRES ON: {{ \Carbon\Carbon::parse($sale->expiry_date)->format('d M, Y') }}</div>
+                    <div style="font-size: 10px; color: #ef4444; font-weight: bold; margin-top: 5px; border-top: 1px dashed #ef4444; padding-top: 5px;">
+                        BOOKING EXPIRES: {{ \Carbon\Carbon::parse($sale->expiry_date)->format('d-M-Y @ h:i A') }}
+                    </div>
                 @endif
             </div>
         </div>
