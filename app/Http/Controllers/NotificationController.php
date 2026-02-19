@@ -49,7 +49,8 @@ class NotificationController extends Controller
         } else {
             $query->where(function($q) use ($currentUser) {
                 $q->where('receiver_role', 'All')
-                ->orWhere('receiver_role', $currentUser->role);
+                ->orWhere('receiver_role', $currentUser->role)
+                ->orWhereNull('receiver_role');
             })->whereNull('receiver_id');
         }
 
@@ -70,25 +71,25 @@ class NotificationController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-{
-    $request->validate([
-        'message' => 'required|string|max:500',
-        'type' => 'required|in:CHAT,SYSTEM_NOTE',
-        'receiver_id' => 'nullable|exists:users,id'
-    ]);
+    {
+        $request->validate([
+            'message' => 'required|string|max:500',
+            'type' => 'required|in:CHAT,SYSTEM_NOTE',
+            'receiver_id' => 'nullable|exists:users,id'
+        ]);
 
-    Notification::create([
-        'sender_id' => auth()->id(),
-        'receiver_id' => $request->receiver_id,
-        'message' => $request->message,
-        // Fix: Use an empty string or ensure your migration allows NULL
-        'receiver_role' => $request->receiver_id ? 'Admin' : 'All', 
-        'type' => $request->type,
-        'is_read' => false,
-    ]);
+        Notification::create([
+            'sender_id' => auth()->id(),
+            'receiver_id' => $request->receiver_id,
+            'message' => $request->message,
+            // Fix: Use an empty string or ensure your migration allows NULL
+            'receiver_role' => $request->receiver_id ? 'Admin' : 'All', 
+            'type' => $request->type,
+            'is_read' => false,
+        ]);
 
-    return back()->with('success', 'Message sent!');
-}
+        return back()->with('success', 'Message sent!');
+    }
 
     /**
      * Display the specified resource.
@@ -120,5 +121,18 @@ class NotificationController extends Controller
     public function destroy(Notification $notification)
     {
         //
+    }
+
+    public function resolve(Notification $notification)
+    {
+        //Only Admins can resolve Alerts
+
+        if(auth()->user()->role!== 'Admin') {
+            return back()->with('error', 'Unauthorized');
+    }
+
+    $notification->update(['is_read' => true]);
+    
+    return back()->with('success', 'Alert marked as resolved!');
     }
 }

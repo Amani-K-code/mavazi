@@ -132,17 +132,47 @@
         </a>
 
         <nav class="flex-1 px-4 space-y-2 mt-4">
-            <a href="{{ route('cashier.dashboard') }}" class="flex items-center p-3 rounded-xl {{ request()->routeIs('cashier.dashboard') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70 transition' }}">
-                <i class="fas fa-home w-5 mr-3"></i> Catalog
-            </a>
-            <a href="{{ route('cashier.inventory') }}" class="flex items-center p-3 rounded-xl {{ request()->is('cashier/inventory') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70 transition' }}">
-                <i class="fas fa-box w-5 mr-3"></i> Inventory
-            </a>
-            <a href="{{ route('cashier.history') }}" class="flex items-center p-3 rounded-xl {{ request()->routeIs('cashier.history') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70 transition' }}">
-                <i class="fas fa-history w-5 mr-3"></i> History
-            </a>
+            @if(Auth::user()->role == 'Storekeeper')
+                {{-- STOREKEEPER TABS --}}
+                <a href="{{ route('storekeeper.dashboard') }}" class="flex items-center p-3 rounded-xl {{ request()->routeIs('storekeeper.dashboard') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70' }}">
+                    <i class="fas fa-home w-5 mr-3"></i> Home
+                </a>
+                <a href="{{ route('storekeeper.flagged') }}" class="flex items-center p-3 rounded-xl {{ request()->routeIs('storekeeper.flagged') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70' }}">
+                    <i class="fas fa-flag w-5 mr-3 text-logos-gold"></i> Flagged Items
+                </a>
+                <a href="{{ route('storekeeper.history') }}" class="flex items-center p-3 rounded-xl {{ request()->routeIs('storekeeper.history') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70' }}">
+                    <i class="fas fa-history w-5 mr-3"></i> Restock History
+                </a>
+            @elseif(Auth::user()->role == 'Cashier')
+                {{-- CASHIER TABS (Unchanged Logic) --}}
+                <a href="{{ route('cashier.dashboard') }}" class="flex items-center p-3 rounded-xl {{ request()->routeIs('cashier.dashboard') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70' }}">
+                    <i class="fas fa-home w-5 mr-3"></i> Catalog
+                </a>
+                <a href="{{ route('cashier.inventory') }}" class="flex items-center p-3 rounded-xl {{ request()->is('cashier/inventory') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70' }}">
+                    <i class="fas fa-box w-5 mr-3"></i> Inventory
+                </a>
+                <a href="{{ route('cashier.history') }}" class="flex items-center p-3 rounded-xl {{ request()->routeIs('cashier.history') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70' }}">
+                    <i class="fas fa-history w-5 mr-3"></i> History
+                </a>
+            @endif
+
+            {{-- COMMON TAB: NOTIFICATIONS (Same for all users) --}}
             <a href="{{ route('notifications.index') }}" class="flex items-center p-3 rounded-xl relative {{ request()->routeIs('notifications.index') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70 transition' }}">
                 <i class="fas fa-bell w-5 mr-3"></i> Notifications
+
+                {{-- 1. LOW STOCK ALERT DOT (Ping) --}}
+                @php 
+                    $lowStockCount = \App\Models\Inventory::whereColumn('stock_quantity', '<=', 'low_stock_threshold')->count();
+                @endphp
+                @if($lowStockCount > 0)
+                    {{-- This is the "Ghost" ping that attracts the eye --}}
+                    <span class="absolute -top-1 -right-1 flex h-3 w-3">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
+                    </span>
+                @endif
+
+                {{-- 2. UNREAD CHAT COUNT (Pulse) --}}
                 @php $unread = auth()->user()->unread_count; @endphp 
                 @if($unread > 0)
                     <span class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white animate-pulse">
@@ -150,6 +180,8 @@
                     </span>
                 @endif
             </a>
+
+            {{-- LOGOUT --}}
             <div class="pt-6">
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf
@@ -159,6 +191,7 @@
                 </form>
             </div>
         </nav>
+
     </aside>
 
     <main class="flex-1 flex flex-col">
@@ -189,7 +222,60 @@
             </div>
         </header>
 
+        <div class="px-8 mt-4">
+            @php 
+                $alertItems = \App\Models\Inventory::whereColumn('stock_quantity', '<=', 'low_stock_threshold')->get();
+            @endphp
+            @if($alertItems->count() > 0)
+                <div class="bg-red-600 text-white px-6 py-3 rounded-2xl flex items-center justify-between shadow-lg animate-pulse">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-3 text-yellow-300"></i>
+                        <span class="text-sm font-bold uppercase tracking-wide">SYSTEM ALERT: {{ $alertItems->count() }} items are critically low on stock!</span>
+                    </div>
+                    <a href="{{ route('notifications.index') }}" class="text-[10px] bg-white/20 px-3 py-1 rounded-full hover:bg-white/40 transition">VIEW DETAILS</a>
+                </div>
+            @endif
+        </div>
+
+        <div class="px-8 mt-4">
+            @php 
+                // This fetches the actual items that are low
+                $lowStockAlerts = \App\Models\Inventory::whereColumn('stock_quantity', '<=', 'low_stock_threshold')->get();
+            @endphp
+
+            @if($lowStockAlerts->count() > 0)
+                @foreach($lowStockAlerts as $item)
+                    <div class="mb-2 bg-red-600 text-white px-6 py-3 rounded-2xl flex items-center justify-between shadow-lg animate-pulse">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-triangle mr-3 text-yellow-300"></i>
+                            <div>
+                                <span class="text-xs font-black uppercase block leading-none">Low Stock Alert</span>
+                                <span class="text-sm font-medium">{{ $item->item_name }} ({{ $item->size_label }}) has only {{ $item->stock_quantity }} left!</span>
+                            </div>
+                        </div>
+                        <a href="{{ Auth::user()->role == 'Storekeeper' ? route('storekeeper.dashboard') : route('notifications.index') }}" 
+                        class="text-[10px] font-bold bg-white/20 px-3 py-1 rounded-full hover:bg-white/40 transition border border-white/30">
+                        ACTION REQUIRED
+                        </a>
+                    </div>
+                @endforeach
+            @endif
+        </div>
+
         <div class="p-8 overflow-y-auto">
+
+            {{-- GLOBAL SUCCESS ALERT --}}
+            @if(session('success'))
+                <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)"
+                    class="fixed top-20 right-8 z-50 bg-green-600 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center border-2 border-green-400">
+                    <i class="fas fa-check-circle mr-3 text-white"></i>
+                    <span class="font-bold">{{ session('success') }}</span>
+                    <button @click="show = false" class="ml-4 text-white/50 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            @endif
+
             @yield('content')
         </div>
     </main>

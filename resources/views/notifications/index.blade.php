@@ -64,22 +64,72 @@
         <div class="flex flex-col h-full overflow-x-auto mb-4 p-6 space-y-4 custom-scrollbar">
             @foreach($notifications as $msg)
                 @if($msg->type == 'SYSTEM_NOTE')
-                    <div class="flex justify-center my-4">
-                        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 px-4 py-2 rounded shadow-sm text-sm">
-                            <i class="fas fa-exclamation-triangle mr-2"></i> {{ $msg->message }}
+                    {{-- SYSTEM ALERT STYLE (Red/Green Bar) --}}
+                    <div class="flex justify-center my-6">
+                        <div class="relative w-full max-w-2xl {{ $msg->is_read ? 'bg-green-600 border-green-400' : 'bg-red-600 border-red-400 animate-pulse' }} text-white px-8 py-5 rounded-3xl shadow-2xl border-2 flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0 md:space-x-6 transition-colors duration-500">
+                            
+                            <div class="flex items-center space-x-4">
+                                <div class="bg-white/20 p-3 rounded-2xl">
+                                    <i class="fas {{ $msg->is_read ? 'fa-check-double text-white' : 'fa-exclamation-triangle text-yellow-300' }} fa-lg"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] font-black uppercase tracking-widest opacity-80">
+                                        {{ $msg->is_read ? 'Issue Resolved' : 'Critical Stock Alert' }}
+                                    </p>
+                                    <p class="text-base font-bold leading-tight">{{ $msg->message }}</p>
+                                    <p class="text-[10px] mt-1 font-medium opacity-70 italic">
+                                        Reported by {{ $msg->user->name }} • {{ $msg->created_at->diffForHumans() }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            @if(auth()->user()->role == 'Admin' && !$msg->is_read)
+                                <form action="{{ route('notifications.resolve', $msg->id) }}" method="POST">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="bg-white text-red-600 px-5 py-2 rounded-xl font-black text-xs uppercase hover:bg-green-100 hover:text-green-700 transition-all shadow-lg active:scale-95 whitespace-nowrap">
+                                        Mark Resolved
+                                    </button>
+                                </form>
+                            @elseif($msg->is_read)
+                                <div class="bg-white/20 px-4 py-2 rounded-xl border border-white/30">
+                                    <span class="text-[10px] font-black uppercase">Cleared</span>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 @else
-                    <div class="flex flex-col {{ $msg->sender_id == auth()->id() ? 'items-end' : 'items-start' }}">
-                        <div class="max-w-[70%] {{ $msg->sender_id == auth()->id() ? 'bg-[#0f172a] text-white rounded-l-2xl rounded-tr-2xl' : 'bg-white dark:bg-slate-800 dark:text-gray-100 rounded-r-2xl rounded-tl-2xl' }} px-4 py-2 shadow-sm relative">
-                            <p class="text-sm leading-relaxed">{{ $msg->message }}</p>
-                            <span class="text-[9px] mt-1 block opacity-60 text-right">
-                                {{ $msg->created_at->format('H:i') }}
+                    {{-- WHATSAPP STYLE CHAT BUBBLES --}}
+                    <div class="flex {{ $msg->sender_id == auth()->id() ? 'justify-end' : 'justify-start' }} mb-2">
+                        <div class="flex flex-col {{ $msg->sender_id == auth()->id() ? 'items-end' : 'items-start' }} max-w-[80%]">
+                            
+                            {{-- The Bubble --}}
+                            <div class="px-4 py-2.5 shadow-sm relative 
+                                {{ $msg->sender_id == auth()->id() 
+                                    ? 'bg-[#0f172a] text-white rounded-2xl rounded-tr-none' 
+                                    : 'bg-white dark:bg-slate-800 dark:text-gray-100 rounded-2xl rounded-tl-none border border-gray-100 dark:border-slate-700' 
+                                }}">
+                                
+                                <p class="text-[15px] leading-relaxed font-medium">
+                                    {{ $msg->message }}
+                                </p>
+
+                                {{-- Time Stamp inside bubble for cleaner look --}}
+                                <div class="flex items-center justify-end mt-1 space-x-1 opacity-60">
+                                    <span class="text-[9px] uppercase font-bold">
+                                        {{ $msg->created_at->format('H:i') }}
+                                    </span>
+                                    @if($msg->sender_id == auth()->id())
+                                        <i class="fas fa-check-double text-[9px]"></i>
+                                    @endif
+                                </div>
+                            </div>
+
+                            {{-- Sender Name outside --}}
+                            <span class="text-[10px] text-gray-400 mt-1 px-1 font-bold uppercase tracking-tight">
+                                {{ $msg->sender_id == auth()->id() ? 'You' : $msg->user->name }}
                             </span>
                         </div>
-                        <span class="text-[10px] text-gray-400 mt-1 px-1">
-                            {{ $msg->sender_id == auth()->id() ? 'You' : $msg->user->name }}
-                        </span>
                     </div>
                 @endif
             @endforeach

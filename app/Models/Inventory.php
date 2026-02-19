@@ -16,16 +16,23 @@ class Inventory extends Model
     protected static function booted()
     {
         static::saved(function ($inventory) {
-            //trigger for Low Stock Alert
-            if ($inventory->stock_quantity <= 5) {
-            // Check if we already sent an alert to avoid spamming
-            Notification::create([
-                'type' => 'SYSTEM_NOTE',            
+            if ($inventory->stock_quantity <= $inventory->low_stock_threshold) {
+
+            $message = "{$inventory->item_name} (Size: {$inventory->size_label}) is low! Only {$inventory->stock_quantity} left.";
+
+            $alreadyNotified = Notification::where('message', 'like', "%{$inventory->item_name}%")
+                ->where('is_read', false)
+                ->exists();
+            if (!$alreadyNotified) {
+                Notification::create([
+                    'type' => 'SYSTEM_NOTE',            
                 'sender_id' => null,                   // Ensure this user ID exists or use null
                 'receiver_role' => 'All',
-                'message' => "{$inventory->item_name} (Size: {$inventory->size_label}) is low! Only {$inventory->stock_quantity} left.",
+                'message' => $message,
                 'is_read' => false,               // Changed from 'status' => 'pending'
             ]);
+
+            }
             }
         });
     }

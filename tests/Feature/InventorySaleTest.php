@@ -20,6 +20,7 @@ class InventorySaleTest extends TestCase
             'item_name' => 'POLO T-SHIRT',
             'size_label' => 'S',
             'stock_quantity' => 2,
+            'low_stock_threshold' => 5,
             'category' => 'Shirts',
             'price' => 975.00
         ]);

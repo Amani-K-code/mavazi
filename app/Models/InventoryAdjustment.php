@@ -18,4 +18,14 @@ class InventoryAdjustment extends Model
         'reason',
         'user_id'
     ];
+
+    public function inventory()
+    {
+        return $this->belongsTo(Inventory::class, 'inventory_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }

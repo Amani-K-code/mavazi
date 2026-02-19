@@ -30,6 +30,9 @@ class InventoryController extends Controller
 
 
     }
+
+
+
     public function dashboard(Request $request) {
     // 1. Get the search input [cite: 7]
     $searchTerm = $request->input('search');
@@ -55,8 +58,27 @@ class InventoryController extends Controller
     $tabs = ['ALL', 'Shirts', 'Bottoms', 'Outerwear', 'Sportswear', 'Accessories', 'Junior School'];
 
     return view('cashier.dashboard', compact('inventory', 'tabs'));
-}
+    
+    }
 
+
+    public function restock(Request $request, Inventory $item){
+        $request->validate(['restock_amount' => 'required|integer|min:1']);
+
+        $oldQuantity = $item->stock_quantity;
+        $item->increment('stock_quantity', $request->restock_amount);
+
+        InventoryAdjustment::create([
+            'inventory_id'=>$item->id,
+            'quantity_before'=>$oldQuantity,
+            'quantity_change'=>$request->restock_amount,
+            'quantity_after'=>$item->stock_quantity,
+            'reason'=>'RESTOCK: Added by Storekeeper' . auth()->user()->name,
+            'user_id'=>auth()->id(),
+        ]);
+        
+        return back()->with('success', "Added {$request->restock_amount} units to {$item->item_name}");
+    }
     /**
      * Show the form for creating a new resource.
      */
@@ -78,6 +100,25 @@ class InventoryController extends Controller
         return back();
 
     }
+
+    public function storekeeperDashboard(){
+        $items = Inventory::orderBy('item_name')->get()->groupBy('item_name');
+        return view('storekeeper.dashboard', compact('items'));
+    }
+
+    public function flaggedItems(){
+        $items = Inventory::where('is_flagged', true)->orderBy('item_name')->get()->groupBy('item_name');
+        return view('storekeeper.dashboard', compact('items'));
+    }
+
+    public function restockHistory(){
+        $history = InventoryAdjustment::with(['inventory', 'user'])
+                    ->where('reason', 'like', 'RESTOCK:%')
+                    ->latest()
+                    ->get();
+        return view('storekeeper.history', compact('history'));
+    }
+
     
     
     

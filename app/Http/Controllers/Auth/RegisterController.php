@@ -25,7 +25,8 @@ class RegisterController extends Controller
                 return back()->withErrors(['email'=> 'Only Logos Christian School emails are permitted.']);
             }
 
-            $lastAlias = User::orderBy('user_id_alias', 'desc')->first()->user_id_alias;
+            $lastUser = User::orderBy('user_id_alias', 'desc')->first();
+            $lastAlias = $lastUser ? $lastUser->user_id_alias : '000';
             $newAlias = str_pad((int)$lastAlias + 1, 3, '0', STR_PAD_LEFT);
 
             $user = User::create([

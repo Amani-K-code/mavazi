@@ -34,14 +34,10 @@ Route::middleware(['auth'])->group(function () {
         return view('admin.dashboard');
     })->middleware('role:Admin');
 
-    Route::get('/storekeeper/dashboard', function(){
-        return view('storekeeper.dashboard');
-    })->middleware('role:Storekeeper');
-
-
     Route::get('/cashier/dashboard', [InventoryController::class, 'dashboard'])
     ->middleware('role:Cashier')
     ->name('cashier.dashboard');
+
     Route::post('/cashier/payment', [SaleController::class, 'showPayment'])->name('cashier.payment');
     Route::post('/sales/store', [SaleController::class, 'store'])->name('sales.store');
     Route::get('sales/download/{id}', [SaleController::class, 'downloadReceipt'])->name('sales.download');
@@ -50,10 +46,23 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/cashier/history', [SaleController::class, 'history'])->name('cashier.history');
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications', [NotificationController::class, 'store'])->name('notifications.store');
+    Route::patch('/notifications/{notification}/resolve', [NotificationController::class, 'resolve'])->name('notifications.resolve');
+
+
+    
+
+
 
     
 
 
     Route::get('/admin/reservations', [ReservationController::class, 'index'])->name('admin.reservations')->middleware('role:Admin');
     Route::post('/admin/reservations/restore/{id}', [ReservationController::class, 'restore'])->name('admin.reservations.restore')->middleware('role:Admin');
+});
+
+Route::middleware(['auth', 'role:Storekeeper'])->prefix('storekeeper')->name('storekeeper.')->group(function () {
+    Route::get('/dashboard', [InventoryController::class, 'storekeeperDashboard'])->name('dashboard');
+    Route::get('/flagged', [InventoryController::class, 'flaggedItems'])->name('flagged');
+    Route::get('/history', [InventoryController::class, 'restockHistory'])->name('history');
+    Route::post('/inventory/{item}/restock', [InventoryController::class, 'restock'])->name('restock');
 });
