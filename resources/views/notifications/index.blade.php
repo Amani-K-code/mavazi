@@ -78,7 +78,8 @@
                                     </p>
                                     <p class="text-base font-bold leading-tight">{{ $msg->message }}</p>
                                     <p class="text-[10px] mt-1 font-medium opacity-70 italic">
-                                        Reported by {{ $msg->user->name }} • {{ $msg->created_at->diffForHumans() }}
+                                        {{-- ADDED: Clock time (H:i) before the diffForHumans --}}
+                                        Reported by {{ $msg->user?->name ?? 'System' }} • {{ $msg->created_at->format('H:i') }} ({{ $msg->created_at->diffForHumans() }})
                                     </p>
                                 </div>
                             </div>

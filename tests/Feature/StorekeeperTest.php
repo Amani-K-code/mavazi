@@ -4,12 +4,14 @@ namespace Tests\Feature;
 
 use App\Models\Inventory;
 use App\Models\User;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class StorekeeperTest extends TestCase
 {
+    use DatabaseTransactions;
     /**
      * A basic feature test example.
      */
@@ -24,8 +26,6 @@ class StorekeeperTest extends TestCase
     public function test_storekeeper_cannot_decrement_stock()
     {
         // 1. Seed the specific tables needed for this test
-        $this->seed([\Database\Seeders\UserSeeder::class, \Database\Seeders\InventorySeeder::class]);
-
         // Finding the data from seeders
         $storekeeper = User::where('user_id_alias', '006')->first(); 
         $item = Inventory::first();

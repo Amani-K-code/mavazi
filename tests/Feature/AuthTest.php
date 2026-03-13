@@ -4,25 +4,25 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Database\Seeders\UserSeeder;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class AuthTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseTransactions;
 
     public function test_admin_can_login_with_alias()
     {
-        $admin = User::factory()->create([
-            'role' => 'Admin',
-            'user_id_alias' => '004',
-            'password' => bcrypt('password123')
-        ]);
+        
+
+        $admin = User::where('user_id_alias', '000')->first();
 
         $response = $this->post(route('login.post'), [
-            'user_id_alias' => '004',
-            'password' => 'password123',
+            'user_id_alias' => '000',
+            'password' => '1324@adm1n',
         ]);
+
 
         $this->assertAuthenticatedAs($admin);
         $response->assertRedirect('/admin/dashboard');
@@ -47,9 +47,6 @@ class AuthTest extends TestCase
     public function test_cashier_id_012_registration_success(){
     
     // The controller will find 011 and calculate 012
-
-    $this->seed(UserSeeder::class);
-
     $response = $this->post('/register', [
         'name' => 'Test Cashier', 
         'email' => 'test012@logos.ac.ke',

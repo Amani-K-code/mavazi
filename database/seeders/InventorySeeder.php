@@ -50,7 +50,7 @@ class InventorySeeder extends Seeder
         }
 
         fclose($file);
-        $this->command->info("Inventory seeded succesfully! 🌱");
+        $this->command->info("Inventory seeded succesfully from csv file! 🌱");
     }
 
     private function getCategory($name){

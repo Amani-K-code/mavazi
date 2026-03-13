@@ -101,14 +101,44 @@ class InventoryController extends Controller
 
     }
 
-    public function storekeeperDashboard(){
-        $items = Inventory::orderBy('item_name')->get()->groupBy('item_name');
-        return view('storekeeper.dashboard', compact('items'));
+    public function storekeeperDashboard(Request $request){
+        $searchTerm = $request->input('search');
+        $category = $request->input('category');
+
+        $query= Inventory::query();
+
+        //Global Search
+        if ($searchTerm){
+            $query->where(function($q) use($searchTerm){
+                $q->where('item_name', 'like', "%{$searchTerm}%")
+                ->orWhere('size_label', 'like', "%{$searchTerm}%");
+            });
+        }
+
+
+        //Category Filtering
+        if ($category && $category !== 'ALL') {
+            $query->where('category', $category);
+        }
+
+
+        $items = $query->orderBy('item_name')->get()->groupBy('item_name');
+        $tabs=['ALL', 'Shirts', 'Bottoms', 'Outerwear', 'Sportswear', 'Accessories', 'Junior School'];
+        return view('storekeeper.dashboard', compact('items', 'tabs'));
     }
 
-    public function flaggedItems(){
-        $items = Inventory::where('is_flagged', true)->orderBy('item_name')->get()->groupBy('item_name');
-        return view('storekeeper.dashboard', compact('items'));
+    public function flaggedItems(Request $request){
+
+        $searchTerm = $request->input('search');
+        $query = Inventory::where('is_flagged', true);
+
+        if($searchTerm){
+            $query->where('item_name', 'like', "%{$searchTerm}%");
+        }
+
+        $items = $query->orderBy('item_name')->get()->groupBy('item_name');
+        $tabs=['ALL', 'Shirts', 'Bottoms', 'Outerwear', 'Sportswear', 'Accessories', 'Junior School'];
+        return view('storekeeper.dashboard', compact('items', 'tabs'));
     }
 
     public function restockHistory(){

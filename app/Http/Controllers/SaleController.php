@@ -34,6 +34,21 @@ class SaleController extends Controller
 
 
     public function store(Request $request){
+
+        //VALIDATION BLOCK:
+        $request->validate([
+            'customer_name' => 'required|string|max:255',
+            'child_name' => 'nullable|string|max:255',
+            'payment_method' => 'required|string',
+            'reference_id' => 'required|unique:sales,reference_id',
+            'total_amount' => 'required|numeric',
+            'status' => 'required|in:CONFIRMED,BOOKED',
+            'cart_data' => 'required'
+
+        ]);
+
+
+
         return DB::transaction(function() use ($request) {
             $receiptNo= 'LCS-' . NOW()->format('dmY') . '-' . str_pad(Sale::count() + 1, 4, '0', STR_PAD_LEFT);
 

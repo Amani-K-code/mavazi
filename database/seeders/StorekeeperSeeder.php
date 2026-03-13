@@ -15,13 +15,13 @@ class StorekeeperSeeder extends Seeder
     public function run(): void
     {
         //
-        User::where('user_id_alias', '000')->update(['name' => 'Superadmin']);
-        User::where('user_id_alias', '001')->update(['name' => 'Principal']);
-        User::where('user_id_alias', '002')->update(['name' => 'Head of Finance']);
+        User::where('user_id_alias', 'like', '%000')->update(['name' => 'Superadmin']);
+        User::where('user_id_alias', 'like', '%001')->update(['name' => 'Principal']);
+        User::where('user_id_alias', 'like', '%002')->update(['name' => 'Head of Finance']);
 
-        User::where('user_id_alias', '006')->update(['name' => 'Animet']);
-        User::where('user_id_alias', '007')->update(['name' => 'LCS Uniforms']);
-        User::where('user_id_alias', '008')->update(['name' => 'School Outfitters']);
+        User::where('user_id_alias', 'like', '%006')->update(['name' => 'Animet']);
+        User::where('user_id_alias', 'like', '%007')->update(['name' => 'LCS Uniforms']);
+        User::where('user_id_alias', 'like', '%008')->update(['name' => 'School Outfitters']);
 
 
 

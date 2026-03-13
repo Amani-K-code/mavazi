@@ -10,13 +10,13 @@ class Inventory extends Model
     /** @use HasFactory<\Database\Factories\InventoryFactory> */
     use HasFactory;
 
-    protected $fillable= ['item_name', 'category', 'size_label', 'price', 'stock_quantity', 'reserved_quantity', 'low_stock_threshold'];
+    protected $fillable= ['item_name', 'category', 'size_label', 'price', 'stock_quantity', 'reserved_quantity', 'low_stock_threshold', 'is_locked'];
 
 
     protected static function booted()
     {
         static::saved(function ($inventory) {
-            if ($inventory->stock_quantity <= $inventory->low_stock_threshold) {
+            if ($inventory->stock_quantity > 0 && $inventory->stock_quantity <= $inventory->low_stock_threshold) {
 
             $message = "{$inventory->item_name} (Size: {$inventory->size_label}) is low! Only {$inventory->stock_quantity} left.";
 

@@ -1,7 +1,12 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminInventoryController;
+use App\Http\Controllers\Admin\AdminRestoreController;
+use App\Http\Controllers\Admin\AdminTransactionController;
+use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\DeliveriesController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ReservationController;
@@ -30,10 +35,6 @@ Route::post('/logout', [LoginController::class,'logout'])->name('logout');
 
 Route::middleware(['auth'])->group(function () {
 
-    Route::get('/admin/dashboard', function(){
-        return view('admin.dashboard');
-    })->middleware('role:Admin');
-
     Route::get('/cashier/dashboard', [InventoryController::class, 'dashboard'])
     ->middleware('role:Cashier')
     ->name('cashier.dashboard');
@@ -58,6 +59,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/admin/reservations', [ReservationController::class, 'index'])->name('admin.reservations')->middleware('role:Admin');
     Route::post('/admin/reservations/restore/{id}', [ReservationController::class, 'restore'])->name('admin.reservations.restore')->middleware('role:Admin');
+    Route::post('/admin/deliveries/{delivery}/approve', [DeliveriesController::class, 'approve'])->name('admin.deliveries.approve')
+           ->middleware('role:Admin');
 });
 
 Route::middleware(['auth', 'role:Storekeeper'])->prefix('storekeeper')->name('storekeeper.')->group(function () {
@@ -65,4 +68,27 @@ Route::middleware(['auth', 'role:Storekeeper'])->prefix('storekeeper')->name('st
     Route::get('/flagged', [InventoryController::class, 'flaggedItems'])->name('flagged');
     Route::get('/history', [InventoryController::class, 'restockHistory'])->name('history');
     Route::post('/inventory/{item}/restock', [InventoryController::class, 'restock'])->name('restock');
+    Route::resource('deliveries', DeliveriesController::class)->only(['index', 'create', 'store']);
+    Route::get('/deliveries/{delivery}/pdf', [DeliveriesController::class, 'downloadPDF'])->name('deliveries.pdf');
+});
+
+
+Route::middleware(['auth', 'role:Admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::post('/inventory/{id}/update-price', [AdminInventoryController::class, 'updatePrice'])->name('inventory.updatePrice');
+    Route::post('/inventory/bulk-discount', [AdminInventoryController::class, 'applyBulkDiscount'])->name('inventory.discount');
+    Route::post('/inventory/{id}/threshold', [AdminInventoryController::class,'adjustThreshold'])->name('inventory.threshold');
+
+
+    //Transaction Oversight
+    Route::get('/transactions', [AdminTransactionController::class, 'index'])->name('transactions.index');
+    
+    
+    //Booking & restore
+    Route::get('/bookings', [AdminRestoreController::class, 'index'])->name('bookings.index');
+    Route::post('/restore/{id}', [AdminRestoreController::class, 'restoreToStock'])->name('restore.stock');
+
+    //Broadcast Notifications
+    Route::post('/broadcast', [NotificationController::class, 'sendBroadcast'])->name('broadcast');
+
 });
