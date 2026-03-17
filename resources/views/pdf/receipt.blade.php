@@ -30,74 +30,73 @@
         .footer { position: fixed; bottom: 30px; width: 100%; text-align: center; font-size: 10px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 10px; }
     </style>
 </head>
-<body>
-    <div class="header">
-        <img src="{{ public_path('images/logo.png') }}" class="logo">
-        <div style="font-size: 22px; font-weight: 900; text-transform: uppercase;">Logos Christian School</div>
-        <div class="motto">Educating for Life and Eternity</div>
-    </div>
 
-    <div class="content">
-        <table class="details-grid">
-            <tr>
-                <td>
-                    <div class="label">Customer Details</div>
-                    <div class="value">Parent: {{ $sale->customer_name }}</div>
-                    <div class="value">Student: {{ $sale->child_name }}</div>
-                </td>
-                <td style="text-align: right;">
-                    <div class="label">Receipt Information</div>
-                    <div class="value">{{ $sale->receipt_no }}</div>
-                    <div class="value">{{ $sale->created_at->format('d-M-Y h:i A') }}</div>
-                    <div class="status-badge {{ $sale->status === 'CONFIRMED' ? 'status-confirmed' : 'status-booked' }}">
-                        {{ $sale->status }}
-                    </div>
-                </td>
-            </tr>
-        </table>
+    <body>
+        <div class="header">
+            <img src="{{ public_path('images/logo.png') }}" class="logo">
+            <div style="font-size: 22px; font-weight: 900; text-transform: uppercase;">Logos Christian School</div>
+            <div class="motto">Educating for Life and Eternity</div>
+        </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Description</th>
-                    <th style="text-align: center;">Qty</th>
-                    <th style="text-align: right;">Unit Price</th>
-                    <th style="text-align: right;">Subtotal</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($sale->items as $item)
+        <div class="content">
+            <table class="details-grid">
                 <tr>
                     <td>
-                        <div style="font-weight: bold; color: #003366;">{{ $item->inventory->item_name }}</div>
-                        <div style="font-size: 10px; color: #64748b;">Size: {{ $item->inventory->size_label }}</div>
+                        <div class="label">Customer Details</div>
+                        <div class="value">Parent: {{ $sale->customer_name }}</div>
+                        <div class="value">Student: {{ $sale->child_name }}</div>
                     </td>
-                    <td style="text-align: center;">{{ $item->quantity }}</td>
-                    <td style="text-align: right;">KES {{ number_format($item->unit_price) }}</td>
-                    <td style="text-align: right; font-weight: bold;">KES {{ number_format($item->subtotal) }}</td>
+                    <td style="text-align: right;">
+                        <div class="label">Receipt Information</div>
+                        <div class="value">{{ $sale->receipt_no }}</div>
+                        <div class="value">{{ $sale->created_at->format('d-M-Y h:i A') }}</div>
+                        <div style="font-size: 10px; color: #64748b; margin-top: 5px;">Cashier: {{ $sale->user->name ?? 'System' }}</div>
+                        <div class="status-badge {{ $sale->status === 'CONFIRMED' ? 'status-confirmed' : 'status-booked' }}">
+                            {{ $sale->status }}
+                        </div>
+                    </td>
                 </tr>
-                @endforeach
-            </tbody>
-        </table>
+            </table>
 
-        <div class="total-section">
-            <div class="total-box">
-                <div class="label">Total Amount {{ $sale->status === 'BOOKED' ? 'Reserved' : 'Paid' }}</div>
-                <div style="font-size: 24px; font-weight: 900; color: #003366;">KES {{ number_format($sale->total_amount) }}</div>
-                <div style="font-size: 10px; color: #64748b; margin-top: 5px;">Payment Method: {{ $sale->payment_method }} | Ref: {{ $sale->reference_id }}</div>
-                
-                @if($sale->status === 'BOOKED' && $sale->expiry_date)
-                    <div style="font-size: 10px; color: #ef4444; font-weight: bold; margin-top: 5px; border-top: 1px dashed #ef4444; padding-top: 5px;">
-                        BOOKING EXPIRES: {{ \Carbon\Carbon::parse($sale->expiry_date)->format('d-M-Y @ h:i A') }}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th style="text-align: center;">Qty</th>
+                        <th style="text-align: right;">Unit Price</th>
+                        <th style="text-align: right;">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($sale->items as $item)
+                    <tr>
+                        <td>
+                            <div style="font-weight: bold; color: #003366;">{{ $item->inventory->item_name }}</div>
+                            <div style="font-size: 10px; color: #64748b;">Size: {{ $item->inventory->size_label }}</div>
+                        </td>
+                        <td style="text-align: center;">{{ $item->quantity }}</td>
+                        <td style="text-align: right;">KES {{ number_format($item->unit_price) }}</td>
+                        <td style="text-align: right; font-weight: bold;">KES {{ number_format($item->subtotal) }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+
+            <div class="total-section">
+                <div class="total-box">
+                    <div class="label">Total Amount {{ $sale->status === 'BOOKED' ? 'Reserved' : 'Paid' }}</div>
+                    <div style="font-size: 24px; font-weight: 900; color: #003366;">KES {{ number_format($sale->total_amount) }}</div>
+                    <div style="font-size: 10px; color: #64748b; margin-top: 5px;">
+                        Method: {{ $sale->payment_method }} | Ref: {{ $sale->reference_id }}
                     </div>
-                @endif
+                    
+                    @if($sale->status === 'BOOKED' && $sale->expiry_date)
+                        <div style="font-size: 10px; color: #ef4444; font-weight: bold; margin-top: 5px; border-top: 1px dashed #ef4444; padding-top: 5px;">
+                            BOOKING EXPIRES: {{ \Carbon\Carbon::parse($sale->expiry_date)->format('d-M-Y @ h:i A') }}
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
-    </div>
-
-    <div class="footer">
-        Thank you for choosing Logos Christian School Mavazi Shop.<br>
-        This is a computer-generated receipt and does not require a signature.
-    </div>
-</body>
+    </body>
 </html>

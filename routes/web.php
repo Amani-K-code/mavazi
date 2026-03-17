@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminInventoryController;
 use App\Http\Controllers\Admin\AdminRestoreController;
 use App\Http\Controllers\Admin\AdminTransactionController;
@@ -25,7 +26,7 @@ Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->na
 Route::post('/register', [RegisterController::class, 'register'])->name('register.post');
 Route::get('/register/success',function() {
     return view('auth.register-success');
-    })->name('register.success');
+    })->name('register.success')->middleware('auth');
 
 //Login logic
 Route::post('/login', [LoginController::class, 'login'])->name('login.post');
@@ -40,6 +41,10 @@ Route::middleware(['auth'])->group(function () {
     ->name('cashier.dashboard');
 
     Route::post('/cashier/payment', [SaleController::class, 'showPayment'])->name('cashier.payment');
+    Route::get('/cashier/payment', function() {
+        return redirect()->route('cashier.dashboard')
+               ->with('error', 'Payment session expired or invalid request. Please start again.');
+    });
     Route::post('/sales/store', [SaleController::class, 'store'])->name('sales.store');
     Route::get('sales/download/{id}', [SaleController::class, 'downloadReceipt'])->name('sales.download');
     Route::post('/feedback/{sale}', [SaleController::class, 'storeFeedback'])->name('feedback.store');
@@ -48,6 +53,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications', [NotificationController::class, 'store'])->name('notifications.store');
     Route::patch('/notifications/{notification}/resolve', [NotificationController::class, 'resolve'])->name('notifications.resolve');
+
+
+    //Download Credentials for new Cashiers
+    Route::get('/admin/download-credentials/{id}', [AdminController::class, 'downloadCredentials'])
+            ->name('admin.cashier.download-credentials');
 
 
     
@@ -78,6 +88,7 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/inventory/{id}/update-price', [AdminInventoryController::class, 'updatePrice'])->name('inventory.updatePrice');
     Route::post('/inventory/bulk-discount', [AdminInventoryController::class, 'applyBulkDiscount'])->name('inventory.discount');
     Route::post('/inventory/{id}/threshold', [AdminInventoryController::class,'adjustThreshold'])->name('inventory.threshold');
+    Route::get('/inventory', [AdminInventoryController::class, 'index'])->name('inventory.index');
 
 
     //Transaction Oversight
@@ -88,7 +99,31 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/bookings', [AdminRestoreController::class, 'index'])->name('bookings.index');
     Route::post('/restore/{id}', [AdminRestoreController::class, 'restoreToStock'])->name('restore.stock');
 
-    //Broadcast Notifications
+    //Inventory Manangement (Full CRUD)
+    Route::post('/inventory/store', [AdminInventoryController::class, 'store'])->name('inventory.store');
+    Route::delete('/inventory/{id}', [AdminInventoryController::class, 'destroy'])->name('inventory.destroy');
+    Route::get('/inventory/restock-pdf', [AdminInventoryController::class, 'restockPdf'])->name('inventory.restockPdf');
+    Route::resource('inventory', AdminInventoryController::class); // Store, update and delete
+
+    //Global Broadcast
     Route::post('/broadcast', [NotificationController::class, 'sendBroadcast'])->name('broadcast');
+
+    //User Management
+    Route::get('/users', [AdminDashboardController::class, 'manageUsers'])->name('users.index');
+    Route::patch('/users/{user}/toggle', [AdminController::class, 'toggleUserStatus'])->name('users.toggle');
+
+    //Financial Audit
+    Route::get('/audit', [AdminTransactionController::class, 'auditIndex'])->name('audit.index');
+    Route::patch('/sales/{id}/status', [AdminTransactionController::class, 'updateStatus'])->name('sales.updateStatus');
+
+    //Reports
+    Route::get('/report/download', [AdminDashboardController::class, 'downloadReport'])->name('report.download');
+
+    //Bulk Discount
+    Route::patch('/inventory/bulk-discount', [AdminInventoryController::class, 'applyBulkDiscount'])->name('inventory.discount');
+
+    //Delivery Management for Admin:
+    Route::get('/deliveries', [DeliveriesController::class, 'adminIndex'])->name('deliveries.index');
+    Route::patch('/deliveries/{delivery}/approve', [DeliveriesController::class, 'approve'])->name('deliveries.approve');
 
 });

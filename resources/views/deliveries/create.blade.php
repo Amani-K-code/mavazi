@@ -36,6 +36,11 @@
                     </button>
                 </div>
 
+                <input type="text" 
+                    name="items[INDEX][note]" 
+                    placeholder="Add a note (e.g. Slightly damaged box)" 
+                    class="w-full bg-white border border-gray-200 rounded-lg p-2 text-xs">
+
             </div>
 
             <div class="p-8 grid grid-cols-1 md:grid-cols-3 gap-6 border-b border-gray-100 dark:border-slate-700">

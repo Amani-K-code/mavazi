@@ -162,7 +162,19 @@ class InventoryController extends Controller
      */
     public function store(StoreInventoryRequest $request)
     {
-        //
+        $validated = $request->validate([
+            'item_name' => 'required|string',
+            'category' => 'required|string',
+            'size_label' => 'required|string',
+            'price' => 'required|numeric',
+            'stock_quantity' => 'required|integer',
+            'image_path' => 'nullable|string'
+        ]);
+
+        Inventory::create($validated);
+
+        return back()->with('success', 'Item vaulted successfully!');
+        
     }
 
     /**
@@ -186,7 +198,16 @@ class InventoryController extends Controller
      */
     public function update(UpdateInventoryRequest $request, Inventory $inventory)
     {
-        //
+        $validated = $request->validate([
+            'item_name' => 'required|string',
+            'price' => 'required|numeric',
+            'stock_quantity' => 'required|integer',
+            'image_path' => 'nullable|string'
+        ]);
+
+        $inventory->update($validated);
+
+        return back()->with('success', 'Item updated successfully!');
     }
 
     /**
@@ -194,6 +215,7 @@ class InventoryController extends Controller
      */
     public function destroy(Inventory $inventory)
     {
-        //
+        $inventory->delete();
+        return back()-> with('success', 'Item removed from global inventory.');
     }
 }

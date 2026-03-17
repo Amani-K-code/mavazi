@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Sale extends Model
 {
@@ -24,7 +26,8 @@ class Sale extends Model
     ];
     
     
-    public function items(){
+    public function items(): HasMany
+    {
         return $this->hasMany(SaleItem::class);
     }
 
@@ -44,6 +47,17 @@ class Sale extends Model
             return 'EXPIRED';
 
         return $now->diffInDays($expiry) . ' days left';
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function saleItems(): HasMany
+    {
+        //Links id of sale to the sale_id column in slae_items table
+        return $this->hasMany(SaleItem::class);
     }
 
 }

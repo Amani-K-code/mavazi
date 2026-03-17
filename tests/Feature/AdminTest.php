@@ -27,6 +27,7 @@ class AdminTest extends TestCase
         // From Userseeder file:
         $this-> admin = User::where('role', 'Admin')->first();
         $this-> cashier = User::where('role', 'Cashier')->first();
+        $this->cashier->update(['is_active' => true]);
 
 
         $this->item = Inventory::first() ?? Inventory::create([
@@ -126,7 +127,9 @@ class AdminTest extends TestCase
                 'customer_name' => 'Test User',
                 'child_name' => 'Test Child',
                 'total_amount' => 1500,
-                'payment_method' => 'M-PESA'
+                'payment_method' => 'M-PESA',
+                'status' => 'CONFIRMED',
+                'cart_data' => json_encode([['id' => $this->item->id, 'qty' => 1, 'price' => 1500]])
             ]);
 
             //Should fail validation
@@ -184,5 +187,50 @@ class AdminTest extends TestCase
 
             // 3. Cast to int to avoid "3000.00" vs 2700 mismatch
             $this->assertEquals(2700, (int)$discountItem->fresh()->price);
-        }        
-    }
+        }
+        
+        
+        /** Test whether admins can add new items and catgories */
+        public function test_admin_can_create_new_inventory_item_and_category(){
+            $this->actingAs($this->admin)->post('/admin/inventory/store', [
+                'item_name' => 'New Leather Shoes',
+                'category' => 'Shoes', //New category
+                'price' => 4500,
+                'stock_quantity' => 50,
+                'low_stock_threshold' => 10,
+                'size_label' => '42'
+                
+                ]);
+
+                $this->assertDatabaseHas('inventories', ['category' => 'Shoes', 'item_name' => 'New Leather Shoes']);
+        }
+
+        public function test_admin_can_send_global_broadcast(){
+            $this->actingas($this->admin)->post('/admin/broadcast', [
+                'message' => 'System maintenance at 5PM'
+            ]);
+
+
+            //Checks whether cashier has recieved notification
+            $this->assertDatabaseHas('notifications', [
+                'receiver_id' => $this-> cashier-> id,
+                'message' => 'System maintenance at 5PM',
+                'type' => 'SYSTEM_NOTE'
+            ]);
+        }
+
+        public function test_admin_can_download_restock_pdf(){
+            $response = $this->actingAs($this->admin)->get('/admin/inventory/restock-pdf');
+            $response->assertStatus(200);
+            $response->assertHeader('content-type', 'application/pdf');
+        }
+
+        public function test_admin_can_toggle_user_status(){
+            $this->actingAs($this->admin)
+                ->patch("/admin/users/{$this->cashier->id}/toggle")
+                ->assertSessionHas('success');
+
+            $this->assertFalse((bool)$this->cashier->fresh()->is_active);
+        }
+
+}

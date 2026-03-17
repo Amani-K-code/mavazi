@@ -23,6 +23,7 @@ class User extends Authenticatable
         'password',
         'user_id_alias',
         'role',
+        'is_active',
     ];
 
     /**
@@ -62,5 +63,10 @@ class User extends Authenticatable
     public function getUnreadCountAttribute()
     {
         return Notification::where('receiver_id', $this->id)->where('is_read', false)->count();
+    }
+    public function sales()
+    {
+        return $this->hasMany(Sale::class);
+
     }
 }

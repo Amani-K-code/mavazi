@@ -18,6 +18,10 @@ class Reservation extends Model
         'status',
     ];
 
+    protected $casts = [
+        'expires_at' => 'datetime',
+    ];
+
 
     public function inventory()
     {

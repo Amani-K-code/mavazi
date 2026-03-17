@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class RegisterController extends Controller
@@ -37,8 +38,13 @@ class RegisterController extends Controller
                 'role'=>'Cashier',
             ]);
 
+            Auth::login($user);
+
+            
+
             //Flash Data to session to be shown on success page
             return redirect()->route('register.success')->with([
+                'registered_user_id' => $user->id,
                 'new_alias'=>$newAlias,
                 'new_name'=> $request->name,
                 'raw_password'=> $request->password

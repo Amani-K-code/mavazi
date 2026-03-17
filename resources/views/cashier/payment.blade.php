@@ -126,27 +126,35 @@
 
 
             <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        const statusSelect = document.getElementById('statusSelect');
-                        const referenceGroup = document.getElementById('referenceGroup');
-                        const referenceInput = document.getElementById('referenceInput');
+                document.addEventListener('DOMContentLoaded', function() {
+                    const statusSelect = document.getElementById('statusSelect');
+                    const referenceGroup = document.getElementById('referenceGroup');
+                    const referenceInput = document.getElementById('referenceInput');
 
-                        function toggleReferenceField() {
-                            if (statusSelect.value === 'BOOKED') {
-                                // Hide and remove requirement for BOOKED
-                                referenceGroup.style.display = 'none';
-                                referenceInput.removeAttribute('required');
-                                referenceInput.value = ''; // Clear it so it doesn't send old data
-                            } else {
-                                // Show and require for CONFIRMED/PENDING
-                                referenceGroup.style.display = 'block';
-                                referenceInput.setAttribute('required', 'required');
-                            }
+                    function toggleReferenceField() {
+                        if (statusSelect.value === 'BOOKED') {
+                            // 1. Hide the UI group
+                            referenceGroup.style.display = 'none';
+                            
+                            // 2. Remove the HTML5 validation requirement
+                            referenceInput.removeAttribute('required');
+                            
+                            // 3. Wipe the text so it doesn't reappear on "Back" or "Refresh"
+                            referenceInput.value = ''; 
+                            
+                            // 4. Disable it so it is NOT sent in the POST request at all
+                            referenceInput.disabled = true; 
+                        } else {
+                            // Show and re-enable for CONFIRMED/PENDING
+                            referenceGroup.style.display = 'block';
+                            referenceInput.setAttribute('required', 'required');
+                            referenceInput.disabled = false;
                         }
+                    }
 
-                        // Run on page load and whenever the status changes
-                        statusSelect.addEventListener('change', toggleReferenceField);
-                        toggleReferenceField(); 
+                    // Run on page load and whenever the status changes
+                    statusSelect.addEventListener('change', toggleReferenceField);
+                    toggleReferenceField(); 
                 });
             </script>
         </div>

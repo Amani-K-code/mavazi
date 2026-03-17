@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Validation\Rule;
 
 class SaleController extends Controller
 {
@@ -40,11 +41,17 @@ class SaleController extends Controller
             'customer_name' => 'required|string|max:255',
             'child_name' => 'nullable|string|max:255',
             'payment_method' => 'required|string',
-            'reference_id' => 'required|unique:sales,reference_id',
+            'reference_id' => [
+                'nullable',
+                'string',
+                'max:255',
+                'unique:sales,reference_id',
+            ],
             'total_amount' => 'required|numeric',
             'status' => 'required|in:CONFIRMED,BOOKED',
             'cart_data' => 'required'
-
+            ],[
+                'reference_id.unique' => 'This Reference ID has already been used for a confirmed sale.'
         ]);
 
 
@@ -52,21 +59,21 @@ class SaleController extends Controller
         return DB::transaction(function() use ($request) {
             $receiptNo= 'LCS-' . NOW()->format('dmY') . '-' . str_pad(Sale::count() + 1, 4, '0', STR_PAD_LEFT);
 
-            $referenceId = $request->reference_id;
 
             if ($request->status === 'BOOKED'){
                 $bookingCount = Sale::where('status', 'BOOKED')->count() + 1;
-                $referenceId = 'BK-' . str_pad($bookingCount, 4, '0', STR_PAD_LEFT);
+                $finalReferenceId = 'BK-' . str_pad($bookingCount, 4, '0', STR_PAD_LEFT);
             }
-            
-            
-            
+            else {
+                $finalReferenceId = $request->reference_id;
+            }
+
             $sale = Sale::create([
                 'receipt_no' => $receiptNo,
                 'customer_name' => $request->customer_name,
                 'child_name' => $request->child_name,
                 'payment_method' => $request->payment_method,
-                'reference_id' => $referenceId, // Uses the genertaed ID or input ID based on the status
+                'reference_id' => $finalReferenceId, // Use generated reference ID for bookings, else use provided one
                 'total_amount' => $request->total_amount,
                 'status' => $request->status,
                 'user_id' => Auth::id(),

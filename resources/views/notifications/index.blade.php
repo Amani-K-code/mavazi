@@ -141,29 +141,27 @@
                 @csrf
                 <input type="hidden" name="receiver_id" value="{{ $selectedUser?->id }}">
                 
-                <div class="flex items-center gap-2">
-                    <select name="type" class="text-xs rounded-full border-gray-300 dark:bg-slate-800 dark:text-white dark:border-slate-700">
+                <div class="flex items-center gap-3">
+                    @if(auth()->user()->role == 'Admin')
+                    <div class="flex items-center gap-2 px-3 py-2 bg-blue-50 dark:bg-slate-800 rounded-xl border border-blue-100 dark:border-slate-700">
+                        <input type="checkbox" name="is_broadcast" id="broadcast" class="rounded text-blue-600 focus:ring-blue-500">
+                        <label for="broadcast" class="text-[10px] font-black uppercase text-blue-600 dark:text-blue-400">Broadcast</label>
+                    </div>
+                    @endif
+
+                    <select name="type" class="text-xs rounded-xl border-gray-300 dark:bg-slate-800 dark:text-white dark:border-slate-700 outline-none">
                         <option value="CHAT">💬 Standard</option>
                         <option value="SYSTEM_NOTE">⚠️ Alert</option>
                     </select>
                     
                     <div class="flex-grow flex items-center bg-gray-100 dark:bg-slate-800 rounded-full px-4 py-2">
                         <input name="message" required autocomplete="off"
-                               class="bg-transparent border-none focus:ring-0 text-sm w-full dark:text-white"
-                               placeholder="Type your message here...">
+                            class="bg-transparent border-none focus:ring-0 text-sm w-full dark:text-white"
+                            placeholder="{{ $selectedUser ? 'Message ' . $selectedUser->name : 'Post to Communication Hub...' }}">
+                        
                         <button type="submit" class="ml-2 bg-yellow-500 hover:bg-yellow-600 text-[#0f172a] p-2 rounded-full transition-transform active:scale-95">
                             <i class="fas fa-paper-plane px-1"></i>
                         </button>
-                        
-                        <div x-data="{ open: false }" class="relative">
-                            <button @click="open = !open" type="button" class="text-xl">😊</button>
-                            <div x-show="open" @click.away="open = false" class="absolute bottom-full mb-2 bg-white p-2 shadow rounded grid grid-cols-4 gap-2">
-                                <button type="button" @click="$dispatch('add-emoji', '✅')">✅</button>
-                                <button type="button" @click="$dispatch('add-emoji', '🏷️')">🏷️</button>
-                                <button type="button" @click="$dispatch('add-emoji', '❌')">❌</button>
-                                <button type="button" @click="$dispatch('add-emoji', '‼️')">‼️</button>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </form>

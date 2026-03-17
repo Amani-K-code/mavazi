@@ -78,17 +78,30 @@ class NotificationController extends Controller
             'receiver_id' => 'nullable|exists:users,id'
         ]);
 
+        // Logic: If broadcast is checked, receiver_id becomes null (everyone sees it)
+        $isHubMessage = $request->has('is_broadcast') || empty($request->receiver_id);
+        $receiverId = $request->receiver_id;
+        $role = 'All';
+
+        if (!$isHubMessage){
+            $receiver = User::find($receiverId);
+            $role = $receiver ? $receiver->role : 'Unknown';
+        } else {
+                $receiverId = null; // Ensure it's null for broadcasts  
+                $role = 'All';
+        }
+        
+        
         Notification::create([
             'sender_id' => auth()->id(),
-            'receiver_id' => $request->receiver_id,
+            'receiver_id' => $receiverId,
             'message' => $request->message,
-            // Fix: Use an empty string or ensure your migration allows NULL
-            'receiver_role' => $request->receiver_id ? 'Admin' : 'All', 
+            'receiver_role' => $role,
             'type' => $request->type,
             'is_read' => false,
         ]);
 
-        return back()->with('success', 'Message sent!');
+        return back()->with('success', $isHubMessage ? 'Message sent to Hub!' : 'Message sent!');
     }
 
     /**
@@ -134,5 +147,23 @@ class NotificationController extends Controller
     $notification->update(['is_read' => true]);
     
     return back()->with('success', 'Alert marked as resolved!');
+    }
+
+    public function sendBroadcast(Request $request){
+        $request->validate(['message'=>'required|string']);
+
+        $users = User::where('is_active', true)->get();
+
+        foreach($users as $user){
+            Notification::create([
+                'sender_id' => auth()->id(),
+                'receiver_id' => $user->id,
+                'message' => $request->message,
+                'type' => 'SYSTEM_NOTE',
+                'receiver_role' => $user->role,
+                'is_read' => false,
+            ]);
+        }
+        return back()->with('success', 'Broadcast sent to all active staff.');
     }
 }

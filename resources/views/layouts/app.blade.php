@@ -116,7 +116,7 @@
     </script>
 </head>
 <body class="bg-slate-100 min-h-screen flex">
-    <aside class="w-64 bg-logos-blue text-white flex flex-col shadow-xl">
+    <aside class="w-64 bg-logos-blue text-white flex flex-col shadow-xl flex-shrink-0">
         <a href="/{{ strtolower(Auth::user()->role) }}/dashboard" class="p-6 text-center hover:opacity-80 transition border-b border-white/10">
             <div class="mb-2">
                 <img src="{{ asset('images/logo.png') }}" alt="Logos Christian School" class="h-16 w-auto mx-auto object-contain drop-shadow-md">
@@ -124,7 +124,7 @@
             <h1 class="text-xl font-black tracking-widest">MAVAZI</h1>
         </a>
 
-        <nav class="flex-1 px-4 space-y-2 mt-4">
+        <nav class="flex-1 px-4 space-y-2 mt-4 overflow-y-auto">
             @if(Auth::user()->role == 'Storekeeper')
                 <a href="{{ route('storekeeper.dashboard') }}" class="flex items-center p-3 rounded-xl {{ request()->routeIs('storekeeper.dashboard') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70' }}">
                     <i class="fas fa-home w-5 mr-3"></i> Home
@@ -149,9 +149,26 @@
                 <a href="{{ route('cashier.history') }}" class="flex items-center p-3 rounded-xl {{ request()->routeIs('cashier.history') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70' }}">
                     <i class="fas fa-history w-5 mr-3"></i> History
                 </a>
+
+            @elseif(Auth::user()->role == 'Admin')
+                <a href="{{ route('admin.dashboard') }}" class="flex items-center p-3 rounded-xl {{ request()->routeIs('admin.dashboard') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70' }}">
+                    <i class="fas fa-chart-pie w-5 mr-3"></i> Analytics
+                </a>
+                <a href="{{ route('admin.transactions.index') }}" class="flex items-center p-3 rounded-xl {{ request()->routeIs('admin.transactions.*') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70' }}">
+                    <i class="fas fa-receipt w-5 mr-3"></i> All Transactions
+                </a>
+                <a href="{{ route('admin.inventory.index') }}" class="flex items-center p-3 rounded-xl {{ request()->routeIs('admin.inventory.*') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70' }}">
+                    <i class="fas fa-boxes w-5 mr-3"></i> Manage Stock
+                </a>
+                <a href="{{ route('admin.reservations') }}" class="flex items-center p-3 rounded-xl {{ request()->routeIs('admin.reservations') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70' }}">
+                    <i class="fas fa-clock w-5 mr-3"></i> Bookings
+                </a>
+                <a href="{{ route('admin.users.index') }}" class="flex items-center p-3 rounded-xl {{ request()->routeIs('admin.users.index') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70' }}">
+                    <i class="fas fa-users-cog w-5 mr-3"></i> Staff Accounts
+                </a>
             @endif
 
-            {{-- COMMON TAB: NOTIFICATIONS --}}
+            {{-- COMMON TAB: NOTIFICATIONS/ CHATS --}}
             @php 
                 $alertCount = \App\Models\Inventory::where('stock_quantity', '>', 0)
                     ->whereColumn('stock_quantity', '<=', 'low_stock_threshold')
@@ -159,7 +176,7 @@
             @endphp
             <a href="{{ route('notifications.index') }}" class="flex items-center p-3 rounded-xl relative {{ request()->routeIs('notifications.index') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70 transition' }}">
                 <i class="fas fa-bell w-5 mr-3"></i> 
-                <span>Notifications</span>
+                <span>Chats</span>
                 @if($alertCount > 0)
                     <span class="absolute right-3 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-black text-white shadow-lg animate-pulse">
                         {{ $alertCount }}
@@ -168,7 +185,7 @@
             </a>
 
             {{-- LOGOUT --}}
-            <div class="pt-6">
+            <div class="pt-6 pb-4">
                 <form action="{{ route('logout') }}" method="POST">
                     @csrf
                     <button class="w-full py-3 bg-red-500/10 text-red-400 rounded-xl hover:bg-red-500 hover:text-white transition flex items-center justify-center font-bold text-xs uppercase tracking-widest border border-red-500/20">
@@ -176,11 +193,18 @@
                     </button>
                 </form>
             </div>
+
+            <div class="flex items-center gap-2 bg-white/5 p-2 rounded-xl border border-white/5 mt-4">
+                <span class="text-[9px] font-black uppercase px-1 text-white/40">System Status</span>
+                <div class="flex items-center gap-1 bg-green-500/20 text-green-500 px-2 py-1 rounded-lg text-[9px] font-black">
+                    <i class="fas fa-circle text-[6px]"></i> ONLINE
+                </div>
+            </div>
         </nav>
     </aside>
 
-    <main class="flex-1 flex flex-col">
-        <header class="h-16 bg-white shadow-sm flex items-center justify-between px-8 border-b border-gray-100">
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        <header class="h-16 bg-white shadow-sm flex items-center justify-between px-8 border-b border-gray-100 flex-shrink-0">
             <div class="flex items-center">
                 <button onclick="window.history.back()" class="flex items-center text-gray-400 hover:text-logos-blue transition mr-6 group">
                     <i class="fas fa-chevron-left mr-2 group-hover:-translate-x-1 transition"></i>
@@ -216,50 +240,48 @@
         </header>
 
         {{-- Low Stock Alerts section --}}
-        <div class="fixed top-20 right-8 z-[100] space-y-3 pointer-events-none">
-            @php 
-                $lowStockItems = \App\Models\Inventory::where('stock_quantity', '>', 0)
-                    ->whereColumn('stock_quantity', '<=', 'low_stock_threshold')
-                    ->orderBy('updated_at', 'desc')
-                    ->take(3)
-                    ->get(); 
-            @endphp
+        @if(!session()->has('alerts_shown'))
+            <div class="fixed top-20 right-8 z-[100] space-y-3 pointer-events-none">
+                @php 
+                    $lowStockItems = \App\Models\Inventory::where('stock_quantity', '>', 0)
+                        ->whereColumn('stock_quantity', '<=', 'low_stock_threshold')
+                        ->orderBy('updated_at', 'desc')
+                        ->take(3)
+                        ->get();
+                    
+                    // Mark alerts as shown for this session
+                    session(['alerts_shown' => true]);
+                @endphp
 
-            @foreach($lowStockItems as $item)
-                <div x-data="{ show: true }" 
-                    x-show="show" 
-                    x-init="setTimeout(() => show = false, 3000)" 
-                    x-transition:enter="transition ease-out duration-300"
-                    x-transition:enter-start="opacity-0 transform translate-x-12"
-                    x-transition:enter-end="opacity-100 transform translate-x-0"
-                    x-transition:leave="transition ease-in duration-500"
-                    x-transition:leave-start="opacity-100"
-                    x-transition:leave-end="opacity-0 transform translate-y-2"
-                    class="pointer-events-auto flex items-center p-4 w-96 bg-white dark:bg-slate-900 border-l-4 border-red-500 shadow-2xl rounded-2xl ring-1 ring-black/5">
-                    
-                    <div class="flex-shrink-0 bg-red-100 dark:bg-red-900/30 p-2.5 rounded-xl">
-                        <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400 text-lg"></i>
-                    </div>
-                    
-                    <div class="ml-4 flex-1">
-                        <div class="flex justify-between items-start">
-                            <p class="text-[10px] font-black uppercase tracking-[0.15em] text-red-600 mb-0.5">Stock Warning</p>
-                            <span class="text-[9px] font-bold text-gray-400 uppercase italic">{{ $item->updated_at->diffForHumans() }}</span>
+                @foreach($lowStockItems as $item)
+                    <div x-data="{ show: true }" 
+                        x-show="show" 
+                        x-init="setTimeout(() => show = false, 5000)" 
+                        class="pointer-events-auto flex items-center p-4 w-96 bg-white dark:bg-slate-900 border-l-4 border-red-500 shadow-2xl rounded-2xl ring-1 ring-black/5 animate-in slide-in-from-right duration-500">
+                        
+                        <div class="flex-shrink-0 bg-red-100 dark:bg-red-900/30 p-2.5 rounded-xl">
+                            <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400 text-lg"></i>
                         </div>
-                        <p class="text-sm font-black text-logos-blue dark:text-white truncate">
-                            {{ $item->item_name }}
-                        </p>
-                        <p class="text-xs text-gray-500 font-medium italic">Size: {{ $item->size_label }} • Only {{ $item->stock_quantity }} left</p>
+                        
+                        <div class="ml-4 flex-1">
+                            <div class="flex justify-between items-start">
+                                <p class="text-[10px] font-black uppercase tracking-[0.15em] text-red-600 mb-0.5">Stock Warning</p>
+                            </div>
+                            <p class="text-sm font-black text-logos-blue dark:text-white truncate">
+                                {{ $item->item_name }}
+                            </p>
+                            <p class="text-xs text-gray-500 font-medium italic">Size: {{ $item->size_label }} • Only {{ $item->stock_quantity }} left</p>
+                        </div>
+
+                        <button @click="show = false" class="ml-4 text-gray-300 hover:text-red-500 transition-colors">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
+                @endforeach
+            </div>
+        @endif
 
-                    <button @click="show = false" class="ml-4 text-gray-300 hover:text-red-500 transition-colors">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            @endforeach
-        </div>
-
-        <div class="p-8 overflow-y-auto">
+        <div class="p-8 overflow-y-auto flex-1">
             @if(session('success'))
                 <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 4000)" class="fixed top-20 right-8 z-50 bg-green-600 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center border-2 border-green-400">
                     <i class="fas fa-check-circle mr-3"></i>
@@ -270,6 +292,7 @@
         </div>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         function toggleDarkMode() {
             document.documentElement.classList.toggle('dark');
@@ -282,6 +305,35 @@
             if (icon) icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
         }
         updateIcon(document.documentElement.classList.contains('dark'));
+
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        });
+
+        // Capture Laravel Session Success/Error/Warning
+        @if(session('success'))
+            Toast.fire({ icon: 'success', title: "{{ session('success') }}" });
+        @endif
+
+        @if(session('error'))
+            Toast.fire({ icon: 'error', title: "{{ session('error') }}" });
+        @endif
+
+        // Specifically for Duplicate Ref ID or Validation Errors
+        @if($errors->any())
+            Toast.fire({ 
+                icon: 'warning', 
+                title: "{{ $errors->first() }}" // Grabs the first error, like "Duplicate Ref ID"
+            });
+        @endif
     </script>
 </body>
 </html>

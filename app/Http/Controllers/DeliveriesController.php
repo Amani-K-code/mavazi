@@ -40,11 +40,11 @@ class DeliveriesController extends Controller
         return view('deliveries.index', compact('deliveries'));
     }  
     
-    
-
-
-
-
+    public function adminIndex()
+    {
+        $deliveries = Deliveries::with('user', 'items')->latest()->get();
+        return view('admin.deliveries.index', compact('deliveries'));
+    }
 
     /**
      * Show the form for creating a new resource.
@@ -112,7 +112,7 @@ class DeliveriesController extends Controller
                     'item_name' => $itemName,
                     'size' => $size,
                     'quantity' => $data['quantity'],
-                    'note' => $data['note'] ?? $data['notes'] ?? null,
+                    'note' => $data['note'] ?? null,
                 ]);
             }
 
