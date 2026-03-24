@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Deliveries;
 use App\Models\Feedback;
 use App\Models\Inventory;
 use App\Models\Sale;
@@ -10,11 +11,39 @@ use App\Models\SaleItem;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+
+use function Symfony\Component\Clock\now;
 
 class AdminDashboardController extends Controller
 {
     public function index(){
+
+            $historicalSales = Sale::select(Db::raw('DATE(created_at) as date'), DB::raw('SUM(total_amount) as total'))
+                               ->groupBy('date')->orderBy('date', 'desc')->get();
+
+            $ratingDist = Feedback::select('rating', DB::raw('count(*) as count'))
+                                ->groupBy('rating')
+                                ->pluck('count', 'rating')
+                                ->toArray();
+            $ratingData = [];
+            for ($i = 1; $i <= 5; $i++) { $ratingData[] = $ratingDist[$i] ?? 0; }
+
+            $categoryDist = Inventory::select('category', DB::raw('SUM(stock_quantity) as total'))
+                                ->groupBy('category')
+                                ->get();
+
+            $orderStatus = [
+                'Pending' => Deliveries::where('status', 'PENDING')->count(),
+                'Confirmed' => Deliveries::where('status', 'CONFIRMED')->count(),
+                'Booked' => Sale::where('status', 'BOOKED')->count(),
+            ];
+
+            $lowStockItems = Inventory::whereColumn('stock_quantity', '<=', 'low_stock_threshold')
+                                ->orderBy('stock_quantity', 'asc')
+                                ->take(5)
+                                ->get();
 
             // Top 3 Cashiers (Fixing the $q scope error)
             $topCashiers = User::where('role', 'Cashier')
@@ -39,6 +68,7 @@ class AdminDashboardController extends Controller
                     'stars' => $f->rating,
                     'comment' => $f->comment,
                     'customer_name'=> $f->sale->customer_name ??  'Valued Customer',
+                    'cashier_name' => $f->sale->user->name ?? 'Unknown Cashier',
                 ];
             });
 
@@ -66,16 +96,16 @@ class AdminDashboardController extends Controller
                 
                 
 
-            $dailyTotal = Sale::whereDate('created_at',today())->sum('total_amount');
-            $weeklyTotal = Sale::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->sum('total_amount');
+            $dailyTotal = Sale::whereDate('created_at',Carbon::now())->sum('total_amount');
+            $weeklyTotal = Sale::whereBetween('created_at', [\Illuminate\Support\Carbon::now()->startOfWeek(), \Illuminate\Support\Carbon::now()->endOfWeek()])->sum('total_amount');
             $itemsSoldToday = SaleItem::whereHas('sale', function($q){
-                $q->whereDate('created_at', today());
+                $q->whereDate('created_at', Carbon::now());
             })->sum('quantity');
 
             $salesData = [];
             $salesLabels = [];
             for ($i = 6; $i >= 0; $i--){
-                $date = now()->subDays($i);
+                $date = Carbon::now()->subDays($i);
                 $salesLabels[] = $date->format('D');
                 $salesData[] = Sale::whereDate('created_at', $date)->sum('total_amount');
             }
@@ -83,9 +113,9 @@ class AdminDashboardController extends Controller
 
         $stats = [
             'earnings' => [
-                'daily' => Sale::whereDate('created_at', today())->where('status', 'CONFIRMED')->sum('total_amount'),
-                'weekly' => Sale::whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->where('status', 'CONFIRMED')->sum('total_amount'),
-                'monthly' => Sale::whereMonth('created_at', now()->month)->where('status', 'CONFIRMED')->sum('total_amount'),
+                'daily' => Sale::whereDate('created_at', Carbon::now())->where('status', 'CONFIRMED')->sum('total_amount'),
+                'weekly' => Sale::whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()])->where('status', 'CONFIRMED')->sum('total_amount'),
+                'monthly' => Sale::whereMonth('created_at', Carbon::now()->month)->where('status', 'CONFIRMED')->sum('total_amount'),
             ],
             
             'stock_health' => [
@@ -117,6 +147,11 @@ class AdminDashboardController extends Controller
         $recentActivities =  Sale::with('user')->latest()->take(5)->get();
 
         return view('admin.dashboard', compact(
+            'historicalSales',
+            'ratingData',
+            'categoryDist',
+            'orderStatus',
+            'lowStockItems',
             'stats', 
             'feedbacks', 
             'dailyTotal', 
@@ -125,7 +160,8 @@ class AdminDashboardController extends Controller
             'salesData', 
             'salesLabels', 
             'hourlySales', 
-            'recentActivities', 
+            'recentActivities',
+            'lowStockCount', 
             'topCashiers', 
             'ratings', 
             'topItems', 
@@ -147,33 +183,90 @@ class AdminDashboardController extends Controller
             ->get();
     }
 
-    public function downloadReport(){
-        $sales = Sale::with(['user', 'saleItems.inventory'])
-                     ->whereMonth('created_at', now()->month)
-                     ->get();
 
+
+    public function downloadReport(Request $request) {
+        $query = \App\Models\Sale::with(['user', 'saleItems.inventory']); 
+
+        if ($request->filled('cashier_id')) {
+            $query->where('user_id', $request->cashier_id);
+        }
+        if ($request->filled('customer')) {
+            $query->where('customer_name', 'like', '%' . $request->customer . '%');
+        }
+        if ($request->filled('month')) {
+            $query->whereMonth('created_at', $request->month);
+        }
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->date);
+        }
+
+        $sales = $query->latest()->get();
+
+        // Calculations
         $totalRevenue = $sales->sum('total_amount');
+        $totalSalesCount = $sales->count();
+        $avgOrder = $totalSalesCount > 0 ? ($totalRevenue / $totalSalesCount) : 0;
 
-        $categoryStats = \DB::table('sale_items')
+        // Dates (Using both naming conventions to stop the "Undefined" errors)
+        $generatedAt = now()->format('d M Y, h:i A');
+        $generated_at = $generatedAt; 
+        
+        $monthName = $request->filled('month') 
+            ? \Carbon\Carbon::create()->month($request->month)->format('F') 
+            : now()->format('F');
+        $year = now()->format('Y');
+
+        // Category Stats
+        $categoryStats = \Illuminate\Support\Facades\DB::table('sale_items')
             ->join('inventories', 'sale_items.inventory_id', '=', 'inventories.id')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->whereMonth('sales.created_at', now()->month)
-            ->select('inventories.category', DB::raw('SUM(sale_items.subtotal) as total'))
+            ->whereMonth('sales.created_at', $request->month ?? now()->format('m'))
+            ->select('inventories.category', \Illuminate\Support\Facades\DB::raw('SUM(sale_items.subtotal) as total'))
             ->groupBy('inventories.category')
             ->get();
 
+        // Summary Array
+        $summary = [
+            'total_revenue' => $totalRevenue,
+            'total_sales'   => $totalSalesCount,
+            'total_orders'  => $totalSalesCount,
+            'avg_order'     => $avgOrder,
+            'generated_at'  => $generatedAt,
+            'period'        => $monthName . ' ' . $year,
+        ];
+
+        $data = [
+            'sales'         => $sales,
+            'totalRevenue'  => $totalRevenue,
+            'avgOrder'      => $avgOrder,
+            'categoryStats' => $categoryStats,
+            'monthName'     => $monthName,
+            'year'          => $year,
+            'summary'       => $summary,
+            'generated_at'  => $generatedAt,
+        ];
         
-            $data = 
-            [
-                'sales' => $sales,
-                'totalRevenue' => $totalRevenue,
-                'categoryStats' => $categoryStats,
-                'monthName' => now()->format('F'),
-                'year' => now()->year,
-            ];
-            
-            $pdf = Pdf::loadView('pdf.report', $data);
-            return $pdf->setPaper('a4')->download('Mavazi_Report_'.now()->format('M_Y').'.pdf');
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.report', compact(
+            'sales',
+            'totalRevenue',
+            'totalSalesCount',
+            'avgOrder',
+            'generatedAt',
+            'generated_at', // Added this to satisfy line 121 of your Blade
+            'categoryStats',
+            'monthName',
+            'year',
+            'data',
+            'summary'
+        ));
+
+        return $pdf->setPaper('a4')->download('Mavazi_Report_'.now()->format('d_M_Y').'.pdf');
+    }
+
+    public function feedbackIndex(){
+        $feedbacks = Feedback::with(['sale.user'])->latest()->get();
+        return view('admin.feedback.index', compact('feedbacks'));   
     }
 
 

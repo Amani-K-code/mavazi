@@ -17,19 +17,21 @@ class RoleMiddleware
      */
     public function handle(Request $request, Closure $next, ...$roles): Response{
         // Check if user is logged in
-        if(!Auth::check()){
+        if(!Auth::check()) {
             return redirect('/login');
         }
-
+        
         $user = Auth::user();
 
-        //2. Check if the user's role exists in the allowed roles array
-        //We use in_array for flexibility
-        if (in_array($user->role, $roles)) {
-            return $next($request);
-
+        if(!$user->is_active){
+            $name = $user->name;
+            Auth::logout();
+            return redirect('/login')->with('error', "Sorry $name, your account is currently deactivated. Please contact support.");
         }
 
+        if(in_array($user->role, $roles)) {
+            return $next($request);
+        }
 
         // If unauthorized they are redirected to their specific landing page
         return match($user->role){

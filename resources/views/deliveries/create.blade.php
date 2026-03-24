@@ -19,43 +19,44 @@
 
         {{-- 1. Delivery Header Section --}}
         <div class="bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-2xl border border-gray-100 dark:border-slate-700 overflow-hidden">
-            <div class="bg-[#0f172a] p-8 text-white flex justify-between items-center">
-                <div>
-                    <h2 class="text-3xl font-black uppercase tracking-tighter">Register New Delivery</h2>
+            
+            {{-- Header Title & Buttons --}}
+            <div class="bg-[#0f172a] p-8 text-white flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="text-center md:text-left">
+                    <h2 class="text-3xl font-black uppercase tracking-tighter text-white">Register New Delivery</h2>
                     <p class="text-blue-200/60 font-medium">Add quantities and prices to calculate total cost.</p>
                 </div>
                 
-                <div class="flex space-x-4">
-                    {{-- Option 1: Normal Submit --}}
-                    <button type="submit" name="submit_only" class="bg-white/10 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-white/20 transition border border-white/20">
+                <div class="flex flex-wrap justify-center gap-4">
+                    <button type="submit" name="submit_only" class="bg-white/10 text-white px-6 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-white/20 transition border border-white/20 text-xs">
                         Submit Only
                     </button>
-                    {{-- Option 2: Submit + PDF --}}
-                    <button type="submit" name="submit_with_pdf" value="1" class="bg-logos-gold text-logos-blue px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:scale-105 transition shadow-lg flex items-center">
-                        <i class="fas fa-file-pdf mr-2"></i> Submit & Download PDF
+                    <button type="submit" name="submit_with_pdf" value="1" class="bg-logos-gold text-logos-blue px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:scale-105 transition shadow-lg flex items-center text-xs">
+                        <i class="fas fa-file-pdf mr-2 text-lg"></i> Submit & Download PDF
                     </button>
                 </div>
-
-                <input type="text" 
-                    name="items[INDEX][note]" 
-                    placeholder="Add a note (e.g. Slightly damaged box)" 
-                    class="w-full bg-white border border-gray-200 rounded-lg p-2 text-xs">
-
             </div>
 
-            <div class="p-8 grid grid-cols-1 md:grid-cols-3 gap-6 border-b border-gray-100 dark:border-slate-700">
-                <div>
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Delivery Date</label>
-                    <input type="date" name="delivery_date" required class="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-2xl px-5 py-4 font-bold text-logos-blue focus:ring-2 focus:ring-logos-gold">
+            {{-- Form Inputs Section --}}
+            <div class="p-8 space-y-6">
+                {{-- Row 1: Dates and Totals --}}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Delivery Date</label>
+                        <input type="date" name="delivery_date" required class="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-2xl px-5 py-4 font-bold text-slate-700 dark:text-white focus:ring-2 focus:ring-logos-gold">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Payment Due Date</label>
+                        <input type="date" name="payment_due_date" required class="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-2xl px-5 py-4 font-bold text-slate-700 dark:text-white focus:ring-2 focus:ring-logos-gold">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Invoice Amount (Ksh)</label>
+                        <input type="number" name="total_invoice_amount" id="total_invoice_amount" step="0.01" readonly required class="w-full bg-slate-100 dark:bg-slate-950 border-none rounded-2xl px-5 py-4 font-black text-logos-blue dark:text-logos-gold cursor-not-allowed" placeholder="0.00">
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Payment Due Date</label>
-                    <input type="date" name="payment_due_date" required class="w-full bg-slate-50 dark:bg-slate-900 border-none rounded-2xl px-5 py-4 font-bold text-logos-blue focus:ring-2 focus:ring-logos-gold">
-                </div>
-                <div>
-                    <label class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Invoice Amount (Ksh) - <span class="text-logos-gold">Calculated</span></label>
-                    <input type="number" name="total_invoice_amount" id="total_invoice_amount" step="0.01" readonly required class="w-full bg-slate-100 dark:bg-slate-950 border-none rounded-2xl px-5 py-4 font-black text-logos-blue focus:ring-0 cursor-not-allowed" placeholder="0.00">
-                </div>
+
+                    
+                
             </div>
         </div>
 
@@ -96,6 +97,11 @@
                         <div class="flex items-center space-x-2">
                             <input type="hidden" name="items[{{ $variant->id }}][inventory_id]" value="{{ $variant->id }}">
                             
+                            {{-- Note Input added here inside variant loop --}}
+                            <input type="text" name="items[{{ $variant->id }}][note]" 
+                                class="w-20 h-10 bg-slate-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-lg px-2 text-[10px] font-bold focus:ring-1 focus:ring-logos-blue text-slate-700 dark:text-white"
+                                placeholder="Note">
+
                             {{-- Price Input --}}
                             <input type="number" name="items[{{ $variant->id }}][price]" step="0.01" oninput="calculateTotal()" 
                                 class="line-price w-20 h-10 bg-slate-50 dark:bg-slate-900 border border-gray-200 dark:border-slate-600 rounded-lg px-2 text-[10px] font-bold text-center focus:ring-1 focus:ring-logos-blue"
@@ -136,7 +142,6 @@
 
     function calculateTotal() {
         let grandTotal = 0;
-        // Target all rows in the grid and the registry
         const items = document.querySelectorAll('.row-item');
         
         items.forEach(item => {
@@ -185,6 +190,10 @@
                     <input type="hidden" name="items[new_${newItemCount}][item_name]" value="${name}">
                     <input type="hidden" name="items[new_${newItemCount}][size]" value="${size}">
                     
+                    <input type="text" name="items[new_${newItemCount}][note]" 
+                        class="w-20 h-10 bg-slate-100 dark:bg-slate-900 rounded-lg px-2 text-[10px] font-bold border-none" 
+                        placeholder="Note">
+
                     <input type="number" name="items[new_${newItemCount}][price]" value="${price}" step="0.01" 
                         oninput="calculateTotal()" class="line-price w-20 h-10 bg-slate-100 dark:bg-slate-900 rounded-lg text-center font-bold border-none text-[10px]">
                     
@@ -196,7 +205,7 @@
             </div>`;
         document.getElementById('new-items-registry').insertAdjacentHTML('beforeend', html);
         newItemCount++;
-        calculateTotal(); // Update total after adding new item
+        calculateTotal();
         closeModal();
     }
 </script>

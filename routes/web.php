@@ -111,6 +111,7 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->name('admin.')->grou
     //User Management
     Route::get('/users', [AdminDashboardController::class, 'manageUsers'])->name('users.index');
     Route::patch('/users/{user}/toggle', [AdminController::class, 'toggleUserStatus'])->name('users.toggle');
+    Route::get('/register-cashier', [RegisterController::class, 'showRegistrationForm'])->name('cashier.register');
 
     //Financial Audit
     Route::get('/audit', [AdminTransactionController::class, 'auditIndex'])->name('audit.index');
@@ -125,5 +126,13 @@ Route::middleware(['auth', 'role:Admin'])->prefix('admin')->name('admin.')->grou
     //Delivery Management for Admin:
     Route::get('/deliveries', [DeliveriesController::class, 'adminIndex'])->name('deliveries.index');
     Route::patch('/deliveries/{delivery}/approve', [DeliveriesController::class, 'approve'])->name('deliveries.approve');
+
+    //Skip feedback route
+    Route::get('/sale/skip-feedback', [SaleController::class, 'skipFeedback'])->name('sale.skip-feedback');
+
+
+    //Report Download - Deep Dive Audit
+    Route::get('/report/download', [App\Http\Controllers\Admin\AdminDashboardController::class, 'downloadReport'])
+     ->name('report.download');
 
 });

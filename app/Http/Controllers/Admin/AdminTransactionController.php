@@ -6,19 +6,38 @@ use App\Http\Controllers\Controller;
 use App\Models\Inventory;
 use App\Models\InventoryAdjustment;
 use App\Models\Sale;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class AdminTransactionController extends Controller
 {
     public function index(Request $request){
-        $query = Sale::with('user', 'saleItems.inventory');
+        $cashiers = User::where('role',  'Cashier')->get();
+
+        $query = Sale::with(['user', 'saleItems.inventory'])->latest();
 
         if($request->month){
             $query->whereMonth('created_at', $request->month);
         }
 
-        $transactions = $query->latest()->paginate(20);
-        return view('admin.transactions.index', compact('transactions'));
+        //Filter by Cashier
+        if ($request->filled('cashier_id')){
+            $query->where('user_id', $request->cashier_id);
+        }
+
+
+        //Filter by Customer Name
+        if($request->filled('customer')){
+            $query->where('customer_name', 'like', '%' . $request->customer . '%');
+        }
+
+        //Filter by specific date
+        if($request->filled('date')){
+            $query->whereDate('created_at', $request->date);
+        }
+
+        $sales = $query->paginate(12);
+        return view('admin.transactions.index', compact('sales', 'cashiers'));
     }
 
     public function generateReceiptNumber($sale){

@@ -172,6 +172,8 @@ class SaleController extends Controller
         return $pdf->download($sale->receipt_no . '.pdf');
     }
 
+
+
     public function storeFeedback(Request $request, Sale $sale){
         $request->validate([
             'rating' => 'required|integer|min:1|max:5',
@@ -183,8 +185,18 @@ class SaleController extends Controller
             'comments' => $request->comments,
         ]);
 
+        session()->forget('cart_data');
+
         return redirect()->route('cashier.dashboard')->with('success', 'Feedback received! Thank you for your input.');
     }
+
+
+    public function skipFeedback(){
+        session()->forget('cart_data');
+        session()->forget('cart');
+        return redirect()->route('cashier.dashboard')->with('success', 'Sale completed without feedback. Thank you!');
+    }
+    
 
     public function history(){
         $sales = Sale::where('user_id', Auth::id())->with('items.inventory')->latest()->get();

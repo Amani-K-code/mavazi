@@ -9,13 +9,33 @@ use Illuminate\Http\Request;
 class LoginController extends Controller
 {
     public function login(Request $request){
-        $credentials = $request->validate([
+        $request->validate([
             'user_id_alias' => 'required|string',
             'password' => 'required',
 
         ]);
 
+        $credentials = [
+            'user_id_alias' => $request->user_id_alias,
+            'password' => $request->password,
+
+        ];
+
         if (Auth::attempt($credentials)){
+            $user = Auth::user();
+
+            if(!$user->is_active){
+                $name = $user->name;
+                Auth::logout();
+                
+
+                $message = "Sorry $name, your account is currently deactivated by Admin. Please contact support.";
+
+                if($request->ajax()){
+                    return response()->json(['errors' => ['user_id_alias' => [$message]]], 422);
+                }
+                return back()->withErrors(['user_id_alias' => $message]);
+            }
             $request->session()->regenerate();
             
             $role = Auth::user()->role;
@@ -34,15 +54,16 @@ class LoginController extends Controller
         }
 
         //For AJAX failures
+        $errorMessage = 'The provided credentials do not match our records.';
         if($request->ajax()){
           return response()->json([
-            'errors' => ['user_id_alias' => 'The provided credentials do not match our records.']
+            'errors' => ['user_id_alias' => [$errorMessage]]
           ], 422);
         }
 
         //Fallback for regular submissions
         return back()->withErrors([
-            'user_id_alias' => 'The provided credentials do not match our records.',
+            'user_id_alias' => [$errorMessage],
             ]);
     }
 

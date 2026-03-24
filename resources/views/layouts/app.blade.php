@@ -154,8 +154,11 @@
                 <a href="{{ route('admin.dashboard') }}" class="flex items-center p-3 rounded-xl {{ request()->routeIs('admin.dashboard') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70' }}">
                     <i class="fas fa-chart-pie w-5 mr-3"></i> Analytics
                 </a>
+                <a href="{{ route('admin.deliveries.index') }}" class="flex items-center p-3 rounded-xl {{ request()->routeIs('admin.deliveries.*') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70' }}">
+                    <i class="fas fa-truck-loading w-5 mr-3"></i> Pending Deliveries
+                </a>
                 <a href="{{ route('admin.transactions.index') }}" class="flex items-center p-3 rounded-xl {{ request()->routeIs('admin.transactions.*') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70' }}">
-                    <i class="fas fa-receipt w-5 mr-3"></i> All Transactions
+                    <i class="fas fa-search-dollar w-5 mr-3"></i> Audit & Sales
                 </a>
                 <a href="{{ route('admin.inventory.index') }}" class="flex items-center p-3 rounded-xl {{ request()->routeIs('admin.inventory.*') ? 'bg-white/20 text-white font-bold' : 'hover:bg-white/10 text-white/70' }}">
                     <i class="fas fa-boxes w-5 mr-3"></i> Manage Stock

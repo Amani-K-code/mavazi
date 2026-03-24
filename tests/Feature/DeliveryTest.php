@@ -58,8 +58,11 @@ class DeliveryTest extends TestCase
 
         // Simulate the Admin coming from a specific page so 'back()' has a destination
         $response = $this->actingAs($admin)
-            ->from(route('admin.dashboard')) 
-            ->post(route('admin.deliveries.approve', $delivery->id));
+            ->from(route('admin.deliveries.index')) 
+            ->post(route('admin.deliveries.approve', $delivery->id), [
+                'category' => 'Outerwear',
+                'admin_note' => 'Test approval note'
+            ]);
 
         // Check that it actually redirected (success)
         $response->assertStatus(302);

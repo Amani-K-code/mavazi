@@ -12,19 +12,28 @@ use Illuminate\Support\Facades\DB;
 
 class DeliveriesController extends Controller
 {
-    public function approve(Deliveries $delivery)
+    public function approve(Request $request, Deliveries $delivery)
     {
-        if($delivery->status !== 'PENDING') return back()->with('error', 'Processed already.');
+        $request->validate([
+            'category' => 'required|string',
+            'admin_note' => 'nullable|string',
+        ]);
 
-        foreach($delivery->items as $item) {
-            // Assuming your DeliveryItem model has a 'inventory' relationship
-            if ($item->inventory) {
+        foreach($delivery->items as $item){
+            if($item->inventory){
                 $item->inventory->increment('stock_quantity', $item->quantity);
+                // Update category if changed
+                $item->inventory->update(['category' => $request->category]);
             }
         }
 
-        $delivery->update(['status' => 'CONFIRMED']);
-        return back()->with('success', 'Delivery confirmed. Stock levels updated!');
+
+        if($delivery->status !== 'PENDING') return back()->with('error', 'Processed already.');
+
+        $delivery->update([
+            'status' => 'CONFIRMED',
+            'admin_note' => $request->admin_note]);
+        return back()->with('success', 'Delivery confirmed.Stock updated under category: ' . $request->category . '. Stock levels updated!');
     }
 
 

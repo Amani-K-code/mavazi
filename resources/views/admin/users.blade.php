@@ -4,8 +4,12 @@
 <div class="max-w-5xl mx-auto space-y-8 animate-in slide-in-from-bottom-6 duration-700">
     <div class="flex justify-between items-center">
         <h2 class="text-3xl font-black text-logos-blue dark:text-white italic tracking-tighter">Staff Command</h2>
-        <button class="btn-gold"><i class="fas fa-plus mr-2"></i> Register New User</button>
+        {{-- Point this to the registration form we fixed earlier --}}
+        <a href="{{ route('register') }}" class="btn-gold px-6 py-2 rounded-xl bg-logos-gold text-logos-blue font-black uppercase text-xs shadow-lg">
+            <i class="fas fa-plus mr-2"></i> Register New Cashier
+        </a>
     </div>
+
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         @foreach($users as $user)

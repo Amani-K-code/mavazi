@@ -41,6 +41,23 @@ class AdminInventoryController extends Controller
         return redirect()->route('admin.inventory.index')->with('success', 'New inventory item added successfully!');
     }
 
+
+    public function update(Request $request, $id){
+        $request->validate([
+            'item_name'=> 'required|string',
+            'category' => 'required|string', // Allows for test inut of new categories
+            'price' => 'required|numeric',
+            'stock_quantity' => 'required|integer',
+            'low_stock_threshold' => 'required|integer',
+            'size_label' => 'required|string'
+        ]);
+
+        $item = Inventory::findOrFail($id);
+        $item->update($request->all());
+
+        return redirect()->route('admin.inventory.index')->with('success', 'Item updated successfully!');
+    }
+
     public function destroy($id){
         Inventory::findOrFail($id)->delete();
         return redirect()->route('admin.inventory.index')->with('success', 'Item removed from system.');
