@@ -60,7 +60,7 @@ return [
             'engine' => null,
             'options' => [
                     // This is the same as PDO::MYSQL_ATTR_SSL_STRATEGY => 'REQUIRED'
-                    1014 => 'REQUIRED', 
+                    1014 => env('MYSQL_ATTR_SSL_STRATEGY', 'REQUIRED'), 
                     // This is the same as PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false
                     1013 => false,
                     ],
