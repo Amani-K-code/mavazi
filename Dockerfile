@@ -60,7 +60,8 @@ EXPOSE 10000
 # -------------------------
 # We run these at runtime. The "mkdir" at the start is a 
 # safety net for Render's ephemeral filesystem.
-CMD mkdir -p storage/framework/{sessions,views,cache} bootstrap/cache && \
+# Final startup command
+CMD mkdir -p /tmp/views && \
     php artisan config:clear && \
     php artisan package:discover --ansi && \
     php artisan migrate --force && \
