@@ -12,8 +12,8 @@ WORKDIR /var/www/html
 # Install system dependencies
 # -------------------------
 RUN apt-get update && apt-get install -y \
-    zip unzip git sqlite3 libsqlite3-dev libzip-dev \
-    && docker-php-ext-install pdo pdo_sqlite zip \
+    zip unzip git sqlite3 libsqlite3-dev libzip-dev libmariadb-dev \
+    && docker-php-ext-install pdo pdo_sqlite pdo_mysql zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # -------------------------
@@ -27,30 +27,18 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 COPY . .
 
 # -------------------------
-# Create storage & cache directories and set permissions BEFORE composer install
+# Setup Permissions BEFORE Composer
 # -------------------------
 RUN mkdir -p storage/framework/{sessions,views,cache} bootstrap/cache \
-    && touch database/database.sqlite \
-    && chown -R www-data:www-data storage bootstrap/cache database \
-    && chmod -R 775 storage bootstrap/cache database
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache
 
 # -------------------------
-# Install PHP dependencies (composer)
+# Install PHP dependencies
 # -------------------------
-RUN composer install --no-dev --optimize-autoloader
-
-# -------------------------
-# Clear & cache config to avoid build errors
-# -------------------------
-RUN php artisan config:clear \
-    && php artisan cache:clear \
-    && php artisan config:cache
-
-# -------------------------
-# Run migrations & seed database
-# -------------------------
-RUN php artisan migrate --force \
-    && php artisan db:seed --force
+# We use --no-scripts to prevent Laravel from trying to boot 
+# before the environment is fully ready.
+RUN composer install --no-dev --no-scripts --optimize-autoloader
 
 # -------------------------
 # Expose port
@@ -58,6 +46,10 @@ RUN php artisan migrate --force \
 EXPOSE 10000
 
 # -------------------------
-# Start PHP built-in server
+# Start Script
 # -------------------------
-CMD ["php", "-S", "0.0.0.0:10000", "-t", "public"]
+# We run migrations at runtime, not build time, so we can connect to the DB.
+CMD php artisan config:clear && \
+    php artisan package:discover --ansi && \
+    php artisan migrate --force && \
+    php -S 0.0.0.0:10000 -t public

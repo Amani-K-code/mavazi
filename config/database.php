@@ -58,13 +58,10 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => (defined('PDO::MYSQL_ATTR_SSL_STRATEGY')) ? [
-                        PDO::MYSQL_ATTR_SSL_STRATEGY => 'REQUIRED',
-                        PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
-                    ] : [
-                        1014 => 'REQUIRED', // Fallback for some environments
-                        1013 => false,
-                    ],
+            'options' => [
+                1014 => 'REQUIRED', // PDO::MYSQL_ATTR_SSL_STRATEGY
+                1013 => false,      // PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT
+            ],
         ],
 
         'mariadb' => [
