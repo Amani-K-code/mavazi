@@ -58,10 +58,13 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => [
-                    1014 => 'REQUIRED', 
-                    1013 => false,
-                ],
+            'options' => (defined('PDO::MYSQL_ATTR_SSL_STRATEGY')) ? [
+                        PDO::MYSQL_ATTR_SSL_STRATEGY => 'REQUIRED',
+                        PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
+                    ] : [
+                        1014 => 'REQUIRED', // Fallback for some environments
+                        1013 => false,
+                    ],
         ],
 
         'mariadb' => [
@@ -79,10 +82,9 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => [
-                    PDO::MYSQL_ATTR_SSL_STRATEGY => 'REQUIRED',
-                    PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
-                    ],
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                (PHP_VERSION_ID >= 80500 ? \Pdo\Mysql::ATTR_SSL_CA : \PDO::MYSQL_ATTR_SSL_CA) => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
         ],
 
         'pgsql' => [
