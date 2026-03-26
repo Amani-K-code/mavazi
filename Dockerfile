@@ -17,6 +17,15 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # -------------------------
+# Setup Permissions IMMEDIATELY
+# -------------------------
+# We create these now so they exist even if the COPY command 
+# hasn't brought in the local folders yet.
+RUN mkdir -p storage/framework/{sessions,views,cache} bootstrap/cache \
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# -------------------------
 # Install Composer
 # -------------------------
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -27,17 +36,18 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 COPY . .
 
 # -------------------------
-# Setup Permissions BEFORE Composer
+# Re-assert Permissions
 # -------------------------
-RUN mkdir -p storage/framework/{sessions,views,cache} bootstrap/cache \
-    && chown -R www-data:www-data storage bootstrap/cache \
+# This ensures that files copied from your local machine 
+# don't overwrite the permissions we set above.
+RUN chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
 # -------------------------
 # Install PHP dependencies
 # -------------------------
-# We use --no-scripts to prevent Laravel from trying to boot 
-# before the environment is fully ready.
+# --no-scripts is CRITICAL here to prevent Laravel 
+# from booting during the docker build phase.
 RUN composer install --no-dev --no-scripts --optimize-autoloader
 
 # -------------------------
@@ -48,8 +58,8 @@ EXPOSE 10000
 # -------------------------
 # Start Script
 # -------------------------
-# We run migrations at runtime, not build time, so we can connect to the DB.
-# Start PHP built-in server
+# We run these at runtime. The "mkdir" at the start is a 
+# safety net for Render's ephemeral filesystem.
 CMD mkdir -p storage/framework/{sessions,views,cache} bootstrap/cache && \
     php artisan config:clear && \
     php artisan package:discover --ansi && \
