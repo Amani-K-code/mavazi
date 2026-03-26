@@ -49,7 +49,9 @@ EXPOSE 10000
 # Start Script
 # -------------------------
 # We run migrations at runtime, not build time, so we can connect to the DB.
-CMD php artisan config:clear && \
+# Start PHP built-in server
+CMD mkdir -p storage/framework/{sessions,views,cache} bootstrap/cache && \
+    php artisan config:clear && \
     php artisan package:discover --ansi && \
     php artisan migrate --force && \
     php -S 0.0.0.0:10000 -t public
