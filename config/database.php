@@ -58,10 +58,10 @@ return [
             'prefix_indexes' => true,
             'strict' => true,
             'engine' => null,
-            'options' => [
-                1014 => 'REQUIRED', // PDO::MYSQL_ATTR_SSL_STRATEGY
-                1013 => false,      // PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT
-            ],
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
+            ]) : [],
         ],
 
         'mariadb' => [
