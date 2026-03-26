@@ -12,8 +12,7 @@ WORKDIR /var/www/html
 # Install system dependencies
 # -------------------------
 RUN apt-get update && apt-get install -y \
-    zip unzip git sqlite3 libsqlite3-dev \
-    libzip-dev \
+    zip unzip git sqlite3 libsqlite3-dev libzip-dev \
     && docker-php-ext-install pdo pdo_sqlite zip \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -28,7 +27,7 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 COPY . .
 
 # -------------------------
-# Create storage & cache directories and set permissions
+# Create storage & cache directories and set permissions BEFORE composer install
 # -------------------------
 RUN mkdir -p storage/framework/{sessions,views,cache} bootstrap/cache \
     && touch database/database.sqlite \
@@ -36,7 +35,7 @@ RUN mkdir -p storage/framework/{sessions,views,cache} bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache database
 
 # -------------------------
-# Install PHP dependencies
+# Install PHP dependencies (composer)
 # -------------------------
 RUN composer install --no-dev --optimize-autoloader
 
