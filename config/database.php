@@ -60,7 +60,8 @@ return [
             'engine' => null,
             'options' => [
                 PDO::MYSQL_ATTR_SSL_CA => '/etc/ssl/certs/ca-certificates.crt',
-                PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
+                // Some TiDB versions prefer this instead of verify_server_cert
+                PDO::MYSQL_ATTR_SSL_STRATEGY => 'VERIFY_CA',
             ],
         ],
 
