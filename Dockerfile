@@ -9,42 +9,6 @@ FROM php:8.2-cli
 WORKDIR /var/www/html
 
 # -------------------------
-# Install system dependencies
-# -------------------------
-RUN apt-get update && apt-get install -y \
-    zip unzip git sqlite3 libsqlite3-dev libzip-dev libmariadb-dev \
-    && docker-php-ext-install pdo pdo_sqlite pdo_mysql zip \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# -------------------------
-# Setup Permissions IMMEDIATELY
-# -------------------------
-# We create these now so they exist even if the COPY command 
-# hasn't brought in the local folders yet.
-RUN mkdir -p storage/framework/{sessions,views,cache} bootstrap/cache \
-    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
-
-# -------------------------
-# Install Composer
-# -------------------------
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# -------------------------
-# Copy project files
-# -------------------------
-COPY . .
-
-# -------------------------
-# Re-assert Permissions
-# -------------------------
-# This ensures that files copied from your local machine 
-# don't overwrite the permissions we set above.
-RUN mkdir -p storage/framework/{sessions,views,cache} storage/fonts bootstrap/cache \
-    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
-
-# -------------------------
 # Install system dependencies + PDF/Image Libraries
 # -------------------------
 RUN apt-get update && apt-get install -y \
@@ -55,6 +19,30 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # -------------------------
+# Install Composer Binary
+# -------------------------
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# -------------------------
+# Copy project files
+# -------------------------
+COPY . .
+
+# -------------------------
+# Setup Permissions
+# -------------------------
+# We create fonts folder specifically for DomPDF
+RUN mkdir -p storage/framework/{sessions,views,cache} storage/fonts bootstrap/cache \
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+
+# -------------------------
+# Install PHP dependencies
+# -------------------------
+# This creates the 'vendor' folder that was missing
+RUN composer install --no-dev --no-scripts --optimize-autoloader
+
+# -------------------------
 # Expose port
 # -------------------------
 EXPOSE 10000
@@ -62,10 +50,6 @@ EXPOSE 10000
 # -------------------------
 # Start Script
 # -------------------------
-# We run these at runtime. The "mkdir" at the start is a 
-# safety net for Render's ephemeral filesystem.
-# Final startup command
-# Final startup command
 CMD mkdir -p /tmp/views /tmp/fonts && \
     php artisan config:clear && \
     php artisan package:discover --ansi && \
