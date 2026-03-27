@@ -42,7 +42,7 @@ return [
             'synchronous' => null,
             'transaction_mode' => 'DEFERRED',
         ],
-        
+
     'mysql' => [
         'driver' => 'mysql',
         'url' => env('DB_URL'),
@@ -58,10 +58,10 @@ return [
         'prefix_indexes' => true,
         'strict' => true,
         'engine' => null,
-        'options' => [
+        'options' => (env('APP_ENV') === 'production') ? [
             PDO::MYSQL_ATTR_SSL_CA => '/etc/ssl/certs/ca-certificates.crt',
             PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
-        ],
+        ] : [],
     ],
 
         'mariadb' => [
