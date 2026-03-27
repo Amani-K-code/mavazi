@@ -14,7 +14,8 @@ class InventorySeeder extends Seeder
      */
     public function run(): void
     {
-        $filePath = storage_path('app/logos_school_uniform_pricelist.csv');
+        //$filePath = storage_path('app/logos_school_uniform_pricelist.csv');
+        $filePath = database_path('data/logos_school_uniform_pricelist.csv');
         if(!file_exists($filePath)) {
             $this->command->error("CSV file not found at $filePath");
             return;
