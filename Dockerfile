@@ -64,5 +64,5 @@ EXPOSE 10000
 CMD mkdir -p /tmp/views && \
     php artisan config:clear && \
     php artisan package:discover --ansi && \
-    php artisan migrate --force && \
+    php artisan migrate --seed --force && \
     php -S 0.0.0.0:10000 -t public
