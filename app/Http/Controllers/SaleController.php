@@ -167,6 +167,9 @@ class SaleController extends Controller
     
 
     public function downloadReceipt($id){
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+        
         $sale = Sale::with('items.inventory')->findOrFail($id);
         $pdf = Pdf::loadView('pdf.receipt', compact('sale'));
         return $pdf->download($sale->receipt_no . '.pdf');

@@ -40,15 +40,19 @@ COPY . .
 # -------------------------
 # This ensures that files copied from your local machine 
 # don't overwrite the permissions we set above.
-RUN chown -R www-data:www-data storage bootstrap/cache \
-    && chmod -R 775 storage bootstrap/cache
+RUN mkdir -p storage/framework/{sessions,views,cache} storage/fonts bootstrap/cache \
+    && chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
+    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # -------------------------
-# Install PHP dependencies
+# Install system dependencies + PDF/Image Libraries
 # -------------------------
-# --no-scripts is CRITICAL here to prevent Laravel 
-# from booting during the docker build phase.
-RUN composer install --no-dev --no-scripts --optimize-autoloader
+RUN apt-get update && apt-get install -y \
+    zip unzip git sqlite3 libsqlite3-dev libzip-dev libmariadb-dev \
+    libpng-dev libfreetype6-dev libjpeg62-turbo-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo pdo_sqlite pdo_mysql zip gd \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # -------------------------
 # Expose port
@@ -61,8 +65,9 @@ EXPOSE 10000
 # We run these at runtime. The "mkdir" at the start is a 
 # safety net for Render's ephemeral filesystem.
 # Final startup command
-CMD mkdir -p /tmp/views && \
+# Final startup command
+CMD mkdir -p /tmp/views /tmp/fonts && \
     php artisan config:clear && \
     php artisan package:discover --ansi && \
-    php artisan migrate --seed --force && \
+    php artisan migrate --force && \
     php -S 0.0.0.0:10000 -t public

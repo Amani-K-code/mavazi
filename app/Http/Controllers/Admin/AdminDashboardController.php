@@ -186,6 +186,9 @@ class AdminDashboardController extends Controller
 
 
     public function downloadReport(Request $request) {
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+        
         $query = \App\Models\Sale::with(['user', 'saleItems.inventory']); 
 
         if ($request->filled('cashier_id')) {

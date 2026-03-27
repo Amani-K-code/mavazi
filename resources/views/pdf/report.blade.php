@@ -37,7 +37,13 @@
 <body>
     <div class="header">
         {{-- Verify this path exists in your public folder --}}
-        <img src="{{ public_path('images/logo.png') }}" class="logo">
+        @php
+            $path = public_path('images/logo.png');
+            $type = pathinfo($path, PATHINFO_EXTENSION);
+            $data = file_get_contents($path);
+            $base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+        @endphp
+        <img src="{{ $base64 }}" class="logo">
         <div class="header-text">
             <div style="font-size: 22px; font-weight: 900; text-transform: uppercase; margin-bottom: 2px;">Logos Christian School</div>
             <div style="font-style: italic; font-size: 11px; color: #fbbf24; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Educating for Life and Eternity</div>
